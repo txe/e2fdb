@@ -19,29 +19,17 @@ string[] get_files(string path, string pattern)
   return files;
 }
 /++++++++++++++++++++++++++++/
-int main(string[] argv)
+bool TestBase(string[] edbFiles)
 {
-  // для генерации кода оберток
-  // utils.h2d("c:\\e2fdb-helper.h", "c:\\txt.d", "fdb_", "dbDll");
-  // return 0;
-
-  auto dll = new helper.fb.fbDll("e2fdb-helper.dll");
-
-  SetConsoleOutputCP(65001);
-
-  writeln("Collecting files before read ...");
-
-  const path = "d:\\edb";
-  const edbFiles = get_files(path, "*.edb");
   int count = 0;
 
+  // сперва протестируем все базы
   string[] problems;
-  foreach (index, edbFile; edbFiles) 
-  //foreach (index, edbFile; taskPool.parallel(edbFiles, 5))
+  foreach (index, edbFile; edbFiles) //foreach (index, edbFile; taskPool.parallel(edbFiles, 5))
     try
     {
       count += 1;
-      write("\rnow:" ~ to!string((1+count) * 100 /edbFiles.length) ~ " %, problem(s): " ~ to!string(problems.length));
+      write("\rtest: " ~ to!string(count) ~ " of " ~ to!string(edbFiles.length) ~ " file(s), problem(s): " ~ to!string(problems.length));
       stdout.flush();
 
       EdbParser().Parse(edbFile);
@@ -56,8 +44,35 @@ int main(string[] argv)
       problems ~= e.msg;
     }
 
-  foreach (problem; problems)
-    writeln(problem);
+  if (problems)
+    foreach (problem; problems)
+      writeln(problem);
+  return !!problems.length;
+}
+/++++++++++++++++++++++++++++/
+int main(string[] argv)
+{
+  // для генерации кода оберток
+  // utils.h2d("c:\\e2fdb-helper.h", "c:\\txt.d", "fdb_", "dbDll");
+  // return 0;
+
+  //auto dll = new helper.fb.fbDll("e2fdb-helper.dll");
+
+  SetConsoleOutputCP(65001);
+
+  writeln("Collecting files before read ...");
+
+  const path = "d:\\edb";
+  string[] edbFiles = get_files(path, "*.edb");
+
+  struct PacketWriter
+  {
+    void Push(string[] files) {};
+  }
+
+  PacketWriter writer;
+  if (TestBase(edbFiles))
+    writer.Push(edbFiles);
 
   write("\npress enter to exit:");
   readln();

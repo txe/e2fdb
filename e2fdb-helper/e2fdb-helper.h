@@ -13,32 +13,32 @@
 
 E2FDBHELPER_API const char* fdb_error();
 
-E2FDBHELPER_API intptr_t fdb_provider_open(const char* serverName, const char* baseName, const char* user, const char* password);
-E2FDBHELPER_API bool     fdb_provider_close(intptr_t provider);
+E2FDBHELPER_API int  fdb_provider_open(const char* serverName, const char* baseName, const char* user, const char* password);
+E2FDBHELPER_API bool fdb_provider_close(int provider);
 
-E2FDBHELPER_API intptr_t fdb_transaction_open(intptr_t provider);
-E2FDBHELPER_API bool     fdb_transaction_close(intptr_t trans);
-E2FDBHELPER_API bool     fdb_transaction_start(intptr_t trans);
-E2FDBHELPER_API bool     fdb_transaction_commit(intptr_t trans);
-E2FDBHELPER_API bool     fdb_transaction_rollback(intptr_t trans);
+E2FDBHELPER_API int  fdb_transaction_open(int provider);
+E2FDBHELPER_API bool fdb_transaction_close(int trans);
+E2FDBHELPER_API bool fdb_transaction_start(int trans);
+E2FDBHELPER_API bool fdb_transaction_commit(int trans);
+E2FDBHELPER_API bool fdb_transaction_rollback(int trans);
 
-E2FDBHELPER_API intptr_t fdb_statement_open(intptr_t provider, intptr_t trans);
-E2FDBHELPER_API bool     fdb_statement_close(intptr_t st);
+E2FDBHELPER_API int  fdb_statement_open(int provider, int trans);
+E2FDBHELPER_API bool fdb_statement_close(int st);
 
-E2FDBHELPER_API bool     fdb_statement_prepare(intptr_t st, const char* query);
-E2FDBHELPER_API bool     fdb_statement_execute(intptr_t st, const char* query);
-E2FDBHELPER_API bool     fdb_statement_execute_immediate(intptr_t st, const char* query);
-E2FDBHELPER_API bool     fdb_statement_fetch(intptr_t st);
+E2FDBHELPER_API bool fdb_statement_prepare(int st, const char* query);
+E2FDBHELPER_API bool fdb_statement_execute(int st, const char* query);
+E2FDBHELPER_API bool fdb_statement_execute_immediate(int st, const char* query);
+E2FDBHELPER_API bool fdb_statement_fetch(int st);
 
-E2FDBHELPER_API bool     fdb_statement_set_null(intptr_t st, int index);
-E2FDBHELPER_API bool     fdb_statement_set_int(intptr_t st, int index, int Value);
-E2FDBHELPER_API bool     fdb_statement_set_double(intptr_t st, int index, const double* value);
-E2FDBHELPER_API bool     fdb_statement_set_string(intptr_t st, int index, const char* value);
+E2FDBHELPER_API bool fdb_statement_set_null(int st, int index);
+E2FDBHELPER_API bool fdb_statement_set_int(int st, int index, int Value);
+E2FDBHELPER_API bool fdb_statement_set_double(int st, int index, const double* value);
+E2FDBHELPER_API bool fdb_statement_set_string(int st, int index, const char* value);
 
-E2FDBHELPER_API bool     fdb_statement_get_is_null(intptr_t st, int index);
-E2FDBHELPER_API bool     fdb_statement_get_int(intptr_t st, int index, int* value);
-E2FDBHELPER_API bool     fdb_statement_get_double(intptr_t st, int index, double* value);
-E2FDBHELPER_API bool     fdb_statement_get_string(intptr_t st, int index, char* value);
+E2FDBHELPER_API bool fdb_statement_get_is_null(int st, int index);
+E2FDBHELPER_API bool fdb_statement_get_int(int st, int index, int* value);
+E2FDBHELPER_API bool fdb_statement_get_double(int st, int index, double* value);
+E2FDBHELPER_API bool fdb_statement_get_string(int st, int index, char* value);
 
 
 

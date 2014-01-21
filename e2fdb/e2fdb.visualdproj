@@ -42,7 +42,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -193,6 +193,9 @@
    <File path="edb\edb.formula.d" />
    <File path="edb\edb.parser.d" />
    <File path="edb\edb.structure.d" />
+  </Folder>
+  <Folder name="helper">
+   <File path="helper\helper.fb.d" />
   </Folder>
   <File path="main.d" />
   <File path="utils.d" />

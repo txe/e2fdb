@@ -20,6 +20,10 @@ string[] get_files(string path, string pattern)
 /++++++++++++++++++++++++++++/
 int main(string[] argv)
 {
+  // для генерации кода оберток
+  // utils.h2d("c:\\e2fdb-helper.h", "c:\\txt.d", "fdb_", "dbDll");
+  // return 0;
+
   SetConsoleOutputCP(65001);
 
   writeln("Collecting files before read ...");

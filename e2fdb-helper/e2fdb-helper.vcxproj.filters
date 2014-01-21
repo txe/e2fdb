@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="ibpp">
+      <UniqueIdentifier>{1b43fff1-2a9d-48d3-bf1b-0afc70af5ca2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="ibpp\changelog.txt">
+      <Filter>ibpp</Filter>
+    </None>
+    <None Include="ibpp\howtobuild.txt">
+      <Filter>ibpp</Filter>
+    </None>
+    <None Include="ibpp\license.txt">
+      <Filter>ibpp</Filter>
+    </None>
+    <None Include="ibpp\releasenotes.txt">
+      <Filter>ibpp</Filter>
+    </None>
+    <None Include="ibpp\todo.txt">
+      <Filter>ibpp</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="e2fdb-helper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ibpp\_ibpp.h">
+      <Filter>ibpp</Filter>
+    </ClInclude>
+    <ClInclude Include="ibpp\ibase.h">
+      <Filter>ibpp</Filter>
+    </ClInclude>
+    <ClInclude Include="ibpp\iberror.h">
+      <Filter>ibpp</Filter>
+    </ClInclude>
+    <ClInclude Include="ibpp\ibpp.h">
+      <Filter>ibpp</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="e2fdb-helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\_dpb.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\_ibpp.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\_ibs.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\_rb.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\_spb.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\_tpb.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\array.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\blob.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\database.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\date.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\dbkey.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\events.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\exception.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\row.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\service.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\statement.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\time.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\transaction.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ibpp\user.cpp">
+      <Filter>ibpp</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

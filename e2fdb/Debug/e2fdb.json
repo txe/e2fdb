@@ -1,0 +1,1271 @@
+[
+ {
+  "name" : "edb.formula",
+  "kind" : "module",
+  "file" : "edb\\edb.formula.d",
+  "members" : [
+   {
+    "name" : "std.variant",
+    "kind" : "import",
+    "line" : 3,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.string",
+    "kind" : "import",
+    "line" : 4,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.conv",
+    "kind" : "import",
+    "line" : 5,
+    "protection" : "private"
+   },
+   {
+    "name" : "ASTree",
+    "kind" : "class",
+    "line" : 8,
+    "members" : [
+     {
+      "name" : "_data",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 11,
+      "deco" : "S3std7variant17__T8VariantNVk20Z8VariantN",
+      "originalType" : "Variant",
+      "offset" : 8
+     },
+     {
+      "name" : "_childs",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 12,
+      "deco" : "AC3edb7formula6ASTree",
+      "offset" : 32
+     },
+     {
+      "name" : "find",
+      "kind" : "function",
+      "line" : 15,
+      "deco" : "FS3std7variant17__T8VariantNVk20Z8VariantNZC3edb7formula6ASTree",
+      "originalType" : "ASTree(Variant data)",
+      "parameters" : [
+       {
+        "name" : "data",
+        "deco" : "S3std7variant17__T8VariantNVk20Z8VariantN"
+       }
+      ],
+      "endline" : 21
+     },
+     {
+      "name" : "add",
+      "kind" : "function",
+      "line" : 22,
+      "deco" : "FS3std7variant17__T8VariantNVk20Z8VariantNZC3edb7formula6ASTree",
+      "originalType" : "ASTree(Variant data)",
+      "parameters" : [
+       {
+        "name" : "data",
+        "deco" : "S3std7variant17__T8VariantNVk20Z8VariantN"
+       }
+      ],
+      "endline" : 28
+     }
+    ]
+   },
+   {
+    "name" : "EdbFormulaParser",
+    "kind" : "class",
+    "line" : 32,
+    "members" : [
+     {
+      "name" : "_strFormula",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 34,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 8
+     },
+     {
+      "name" : "Parse",
+      "kind" : "function",
+      "line" : 36,
+      "deco" : "FAyuZC3edb7formula6ASTree",
+      "originalType" : "ASTree(wstring formula)",
+      "parameters" : [
+       {
+        "name" : "formula",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 46
+     },
+     {
+      "name" : "RecParse",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 48,
+      "deco" : "FAyuC3edb7formula6ASTreeZb",
+      "originalType" : "bool(wstring formula, ASTree ast)",
+      "parameters" : [
+       {
+        "name" : "formula",
+        "deco" : "Ayu"
+       },
+       {
+        "name" : "ast",
+        "deco" : "C3edb7formula6ASTree"
+       }
+      ],
+      "endline" : 108
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "edb.parser",
+  "kind" : "module",
+  "file" : "edb\\edb.parser.d",
+  "members" : [
+   {
+    "name" : "std.stdio",
+    "kind" : "import",
+    "line" : 3,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.file",
+    "kind" : "import",
+    "line" : 4,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.string",
+    "kind" : "import",
+    "line" : 5,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.typecons",
+    "kind" : "import",
+    "line" : 6,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.algorithm",
+    "kind" : "import",
+    "line" : 7,
+    "protection" : "private",
+    "selective" : [
+     "replace"
+    ]
+   },
+   {
+    "name" : "std.conv",
+    "kind" : "import",
+    "line" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.path",
+    "kind" : "import",
+    "line" : 9,
+    "protection" : "private"
+   },
+   {
+    "name" : "edb.structure",
+    "kind" : "import",
+    "line" : 11,
+    "protection" : "private"
+   },
+   {
+    "name" : "edb.formula",
+    "kind" : "import",
+    "line" : 12,
+    "protection" : "private"
+   },
+   {
+    "name" : "utils",
+    "kind" : "import",
+    "line" : 13,
+    "protection" : "private"
+   },
+   {
+    "name" : "KeyValue",
+    "kind" : "alias",
+    "protection" : "private",
+    "line" : 16,
+    "deco" : "S3std8typecons48__T5TupleTAyuVAyaa3_6b6579TAyuVAyaa5_76616c7565Z5Tuple"
+   },
+   {
+    "name" : "EdbParserException",
+    "kind" : "class",
+    "line" : 19,
+    "base" : "Exception",
+    "members" : [
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 21,
+      "deco" : "FAyaiAyuZC3edb6parser18EdbParserException",
+      "originalType" : "(string msg, int row = -1, wstring line = \"\")",
+      "parameters" : [
+       {
+        "name" : "msg",
+        "deco" : "Aya"
+       },
+       {
+        "name" : "row",
+        "deco" : "i",
+        "default" : "-1"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu",
+        "default" : "\"\""
+       }
+      ],
+      "endline" : 26
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 27,
+      "deco" : "FAyuiAyuZC3edb6parser18EdbParserException",
+      "originalType" : "(wstring msg, int row = -1, wstring line = \"\")",
+      "parameters" : [
+       {
+        "name" : "msg",
+        "deco" : "Ayu"
+       },
+       {
+        "name" : "row",
+        "deco" : "i",
+        "default" : "-1"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu",
+        "default" : "\"\""
+       }
+      ],
+      "endline" : 32
+     },
+     {
+      "name" : "_row",
+      "kind" : "variable",
+      "line" : 34,
+      "deco" : "i",
+      "offset" : 36
+     },
+     {
+      "name" : "_line",
+      "kind" : "variable",
+      "line" : 35,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 40
+     }
+    ]
+   },
+   {
+    "name" : "EdbParser",
+    "kind" : "struct",
+    "line" : 39,
+    "members" : [
+     {
+      "name" : "_sections",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 42,
+      "deco" : "AC3edb9structure10EdbSection",
+      "offset" : 0
+     },
+     {
+      "name" : "_curRow",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 43,
+      "deco" : "i",
+      "init" : "-1",
+      "offset" : 8
+     },
+     {
+      "name" : "SetCurRow",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 46,
+      "deco" : "FiZv",
+      "parameters" : [
+       {
+        "name" : "row",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 46
+     },
+     {
+      "name" : "GetCurRow",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 47,
+      "deco" : "FZi",
+      "endline" : 52
+     },
+     {
+      "name" : "Parse",
+      "kind" : "function",
+      "line" : 57,
+      "deco" : "FAyaZS3edb9structure7EdbFile",
+      "parameters" : [
+       {
+        "name" : "edbPath",
+        "deco" : "Aya"
+       }
+      ],
+      "endline" : 129
+     },
+     {
+      "name" : "IsSkipLine",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 133,
+      "deco" : "FAyuZb",
+      "originalType" : "bool(wstring line)",
+      "parameters" : [
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 136
+     },
+     {
+      "name" : "IsCommentBegin",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 138,
+      "deco" : "FAyuZb",
+      "originalType" : "bool(wstring line)",
+      "parameters" : [
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 141
+     },
+     {
+      "name" : "InComment",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 143,
+      "deco" : "FC3edb9structure10EdbSectionAyuZv",
+      "originalType" : "void(EdbSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure10EdbSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 147
+     },
+     {
+      "name" : "IsCommentEnd",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 149,
+      "deco" : "FAyuZb",
+      "originalType" : "bool(wstring line)",
+      "parameters" : [
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 152
+     },
+     {
+      "name" : "IsSectionBegin",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 154,
+      "deco" : "FAyuZC3edb9structure10EdbSection",
+      "originalType" : "EdbSection(wstring line)",
+      "parameters" : [
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 186
+     },
+     {
+      "name" : "IsSectionEnd",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 188,
+      "deco" : "FAyuZb",
+      "originalType" : "bool(wstring line)",
+      "parameters" : [
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 191
+     },
+     {
+      "name" : "ParseIdSection",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 193,
+      "deco" : "FC3edb9structure9IdSectionAyuZv",
+      "originalType" : "void(IdSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure9IdSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 210
+     },
+     {
+      "name" : "ParseTreeSection",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 212,
+      "deco" : "FC3edb9structure11TreeSectionAyuZv",
+      "originalType" : "void(TreeSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure11TreeSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 217
+     },
+     {
+      "name" : "ParseDataSection",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 219,
+      "deco" : "FC3edb9structure11DataSectionAyuZv",
+      "originalType" : "void(DataSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure11DataSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 223
+     },
+     {
+      "name" : "ParseDataSectionParam",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 225,
+      "deco" : "FC3edb9structure11DataSectionAyuZb",
+      "originalType" : "bool(DataSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure11DataSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 306
+     },
+     {
+      "name" : "ParseDataSectionElement",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 308,
+      "deco" : "FC3edb9structure11DataSectionAyuZv",
+      "originalType" : "void(DataSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure11DataSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 327
+     },
+     {
+      "name" : "ParsePropSection",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 329,
+      "deco" : "FC3edb9structure11PropSectionAyuZv",
+      "originalType" : "void(PropSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure11PropSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 376
+     },
+     {
+      "name" : "ParseSpecSection",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 378,
+      "deco" : "FC3edb9structure11SpecSectionAyuZv",
+      "originalType" : "void(SpecSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure11SpecSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 409
+     },
+     {
+      "name" : "ParseAliasSection",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 411,
+      "deco" : "FC3edb9structure12AliasSectionAyuZv",
+      "originalType" : "void(AliasSection section, wstring line)",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure12AliasSection"
+       },
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 498
+     },
+     {
+      "name" : "ParseKeyValue",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 500,
+      "deco" : "FAyuZPS3std8typecons48__T5TupleTAyuVAyaa3_6b6579TAyuVAyaa5_76616c7565Z5Tuple",
+      "originalType" : "KeyValue*(wstring line)",
+      "parameters" : [
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 507
+     },
+     {
+      "name" : "SmartSplit",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 509,
+      "deco" : "FAyuZAAyu",
+      "originalType" : "wstring[](wstring line)",
+      "parameters" : [
+       {
+        "name" : "line",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 566
+     },
+     {
+      "name" : "CalculateTypeList",
+      "kind" : "function",
+      "protection" : "private",
+      "line" : 568,
+      "deco" : "FC3edb9structure11DataSectionZv",
+      "parameters" : [
+       {
+        "name" : "section",
+        "deco" : "C3edb9structure11DataSection"
+       }
+      ],
+      "endline" : 599
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "edb.structure",
+  "kind" : "module",
+  "file" : "edb\\edb.structure.d",
+  "members" : [
+   {
+    "name" : "std.stdio",
+    "kind" : "import",
+    "line" : 3,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.conv",
+    "kind" : "import",
+    "line" : 4,
+    "protection" : "private"
+   },
+   {
+    "name" : "EdbFileParserException",
+    "kind" : "class",
+    "line" : 7,
+    "base" : "Exception",
+    "members" : [
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 9,
+      "deco" : "FAyaZC3edb9structure22EdbFileParserException",
+      "originalType" : "(string msg)",
+      "parameters" : [
+       {
+        "name" : "msg",
+        "deco" : "Aya"
+       }
+      ],
+      "endline" : 9
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 10,
+      "deco" : "FAyuZC3edb9structure22EdbFileParserException",
+      "originalType" : "(wstring msg)",
+      "parameters" : [
+       {
+        "name" : "msg",
+        "deco" : "Ayu"
+       }
+      ],
+      "endline" : 10
+     }
+    ]
+   },
+   {
+    "name" : "EdbSection",
+    "kind" : "class",
+    "line" : 13,
+    "members" : []
+   },
+   {
+    "name" : "IdSection",
+    "kind" : "class",
+    "line" : 17,
+    "base" : "EdbSection",
+    "members" : [
+     {
+      "name" : "_baseId",
+      "kind" : "variable",
+      "line" : 19,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "init" : "null",
+      "offset" : 8
+     },
+     {
+      "name" : "_baseName",
+      "kind" : "variable",
+      "line" : 20,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "init" : "null",
+      "offset" : 16
+     },
+     {
+      "name" : "_baseType",
+      "kind" : "variable",
+      "line" : 21,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "init" : "null",
+      "offset" : 24
+     }
+    ]
+   },
+   {
+    "name" : "TreeSection",
+    "kind" : "class",
+    "line" : 24,
+    "base" : "EdbSection",
+    "members" : [
+     {
+      "name" : "_params",
+      "kind" : "variable",
+      "line" : 26,
+      "deco" : "AAAyu",
+      "originalType" : "wstring[][]",
+      "offset" : 8
+     }
+    ]
+   },
+   {
+    "name" : "DataSectionElement",
+    "kind" : "class",
+    "line" : 29,
+    "members" : [
+     {
+      "name" : "Prj",
+      "kind" : "class",
+      "line" : 31,
+      "members" : [
+       {
+        "name" : "this",
+        "kind" : "constructor",
+        "line" : 33,
+        "deco" : "FiAyuAyuZC3edb9structure18DataSectionElement3Prj",
+        "originalType" : "(int typeNum, wstring name, wstring path)",
+        "parameters" : [
+         {
+          "name" : "typeNum",
+          "deco" : "i"
+         },
+         {
+          "name" : "name",
+          "deco" : "Ayu"
+         },
+         {
+          "name" : "path",
+          "deco" : "Ayu"
+         }
+        ],
+        "endline" : 38
+       },
+       {
+        "name" : "_typeNum",
+        "kind" : "variable",
+        "line" : 40,
+        "deco" : "i",
+        "offset" : 8
+       },
+       {
+        "name" : "_name",
+        "kind" : "variable",
+        "line" : 41,
+        "deco" : "Ayu",
+        "originalType" : "wstring",
+        "offset" : 12
+       },
+       {
+        "name" : "_path",
+        "kind" : "variable",
+        "line" : 42,
+        "deco" : "Ayu",
+        "originalType" : "wstring",
+        "offset" : 20
+       }
+      ]
+     },
+     {
+      "name" : "_name",
+      "kind" : "variable",
+      "line" : 45,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 8
+     },
+     {
+      "name" : "_folder",
+      "kind" : "variable",
+      "line" : 46,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "init" : "null",
+      "offset" : 16
+     },
+     {
+      "name" : "_prjs",
+      "kind" : "variable",
+      "line" : 47,
+      "deco" : "AC3edb9structure18DataSectionElement3Prj",
+      "offset" : 24
+     },
+     {
+      "name" : "_simples",
+      "kind" : "variable",
+      "line" : 48,
+      "deco" : "HiAAyu",
+      "originalType" : "wstring[][int]",
+      "offset" : 32
+     }
+    ]
+   },
+   {
+    "name" : "DataSection",
+    "kind" : "class",
+    "line" : 51,
+    "base" : "EdbSection",
+    "members" : [
+     {
+      "name" : "_num",
+      "kind" : "variable",
+      "line" : 53,
+      "deco" : "i",
+      "offset" : 8
+     },
+     {
+      "name" : "_lengthName",
+      "kind" : "variable",
+      "line" : 54,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "init" : "\"\\x14\\x04\\x3b\\x04\\x38\\x04\\x3d\\x04\\x30\\x04, \\x3c\\x04\\x3c\\x04\"",
+      "offset" : 12
+     },
+     {
+      "name" : "_widthName",
+      "kind" : "variable",
+      "line" : 55,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "init" : "\"\\x28\\x04\\x38\\x04\\x40\\x04\\x38\\x04\\x3d\\x04\\x30\\x04, \\x3c\\x04\\x3c\\x04\"",
+      "offset" : 20
+     },
+     {
+      "name" : "_heightName",
+      "kind" : "variable",
+      "line" : 56,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "init" : "\"\\x12\\x04\\x4b\\x04\\x41\\x04\\x3e\\x04\\x42\\x04\\x30\\x04, \\x3c\\x04\\x3c\\x04\"",
+      "offset" : 28
+     },
+     {
+      "name" : "_paramEdit1",
+      "kind" : "variable",
+      "line" : 57,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 36
+     },
+     {
+      "name" : "_paramEdit2",
+      "kind" : "variable",
+      "line" : 58,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 44
+     },
+     {
+      "name" : "_paramEdit3",
+      "kind" : "variable",
+      "line" : 59,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 52
+     },
+     {
+      "name" : "_paramControl",
+      "kind" : "variable",
+      "line" : 60,
+      "deco" : "i",
+      "offset" : 60
+     },
+     {
+      "name" : "_paramComment1",
+      "kind" : "variable",
+      "line" : 61,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 64
+     },
+     {
+      "name" : "_paramComment2",
+      "kind" : "variable",
+      "line" : 62,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 72
+     },
+     {
+      "name" : "_comments",
+      "kind" : "variable",
+      "line" : 63,
+      "deco" : "AAyu",
+      "originalType" : "wstring[]",
+      "offset" : 80
+     },
+     {
+      "name" : "_typeList",
+      "kind" : "variable",
+      "line" : 64,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 88
+     },
+     {
+      "name" : "_elements",
+      "kind" : "variable",
+      "line" : 65,
+      "deco" : "AC3edb9structure18DataSectionElement",
+      "offset" : 96
+     },
+     {
+      "name" : "AddElement",
+      "kind" : "function",
+      "line" : 67,
+      "deco" : "FZC3edb9structure18DataSectionElement",
+      "endline" : 72
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 74,
+      "deco" : "FiZC3edb9structure11DataSection",
+      "originalType" : "(int num)",
+      "parameters" : [
+       {
+        "name" : "num",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 74
+     }
+    ]
+   },
+   {
+    "name" : "PropSection",
+    "kind" : "class",
+    "line" : 77,
+    "base" : "EdbSection",
+    "members" : [
+     {
+      "name" : "PropType",
+      "kind" : "enum",
+      "line" : 79,
+      "baseDeco" : "i",
+      "members" : [
+       {
+        "name" : "NONE",
+        "kind" : "enum member",
+        "line" : 79
+       },
+       {
+        "name" : "GROUP",
+        "kind" : "enum member",
+        "line" : 79
+       },
+       {
+        "name" : "EDIT",
+        "kind" : "enum member",
+        "line" : 79
+       },
+       {
+        "name" : "COMBO",
+        "kind" : "enum member",
+        "line" : 79
+       },
+       {
+        "name" : "CHECK",
+        "kind" : "enum member",
+        "line" : 79
+       }
+      ]
+     },
+     {
+      "name" : "_num",
+      "kind" : "variable",
+      "line" : 81,
+      "deco" : "i",
+      "offset" : 8
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 82,
+      "deco" : "FiZC3edb9structure11PropSection",
+      "originalType" : "(int num)",
+      "parameters" : [
+       {
+        "name" : "num",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 82
+     }
+    ]
+   },
+   {
+    "name" : "SpecSection",
+    "kind" : "class",
+    "line" : 85,
+    "base" : "EdbSection",
+    "members" : [
+     {
+      "name" : "_specNum",
+      "kind" : "variable",
+      "line" : 87,
+      "deco" : "i",
+      "offset" : 8
+     },
+     {
+      "name" : "_libName",
+      "kind" : "variable",
+      "line" : 88,
+      "deco" : "Ayu",
+      "originalType" : "wstring",
+      "offset" : 12
+     },
+     {
+      "name" : "_firstPart",
+      "kind" : "variable",
+      "line" : 89,
+      "deco" : "i",
+      "offset" : 20
+     },
+     {
+      "name" : "_secondPart",
+      "kind" : "variable",
+      "line" : 90,
+      "deco" : "i",
+      "offset" : 24
+     },
+     {
+      "name" : "_columns",
+      "kind" : "variable",
+      "line" : 91,
+      "deco" : "HiAyu",
+      "originalType" : "wstring[int]",
+      "offset" : 28
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 93,
+      "deco" : "FiZC3edb9structure11SpecSection",
+      "originalType" : "(int num)",
+      "parameters" : [
+       {
+        "name" : "num",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 93
+     }
+    ]
+   },
+   {
+    "name" : "AliasSection",
+    "kind" : "class",
+    "line" : 96,
+    "base" : "EdbSection",
+    "members" : [
+     {
+      "name" : "_params",
+      "kind" : "variable",
+      "line" : 98,
+      "deco" : "HiAyu",
+      "originalType" : "wstring[int]",
+      "offset" : 8
+     }
+    ]
+   },
+   {
+    "name" : "EdbFile",
+    "kind" : "struct",
+    "line" : 101,
+    "members" : [
+     {
+      "name" : "_sections",
+      "kind" : "variable",
+      "line" : 103,
+      "deco" : "AC3edb9structure10EdbSection",
+      "offset" : 0
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "kind" : "module",
+  "file" : "main.d",
+  "members" : [
+   {
+    "name" : "std.stdio",
+    "kind" : "import",
+    "line" : 1,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.path",
+    "kind" : "import",
+    "line" : 2,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.file",
+    "kind" : "import",
+    "line" : 3,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.conv",
+    "kind" : "import",
+    "line" : 4,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.string",
+    "kind" : "import",
+    "line" : 5,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.parallelism",
+    "kind" : "import",
+    "line" : 6,
+    "protection" : "private"
+   },
+   {
+    "name" : "edb.parser",
+    "kind" : "import",
+    "line" : 7,
+    "protection" : "private"
+   },
+   {
+    "name" : "SetConsoleOutputCP",
+    "kind" : "function",
+    "line" : 9,
+    "deco" : "WkZi",
+    "parameters" : [
+     {
+      "deco" : "k"
+     }
+    ]
+   },
+   {
+    "name" : "get_files",
+    "kind" : "function",
+    "line" : 12,
+    "deco" : "FAyaAyaZAAya",
+    "parameters" : [
+     {
+      "name" : "path",
+      "deco" : "Aya"
+     },
+     {
+      "name" : "pattern",
+      "deco" : "Aya"
+     }
+    ],
+    "endline" : 19
+   },
+   {
+    "name" : "main",
+    "kind" : "function",
+    "line" : 21,
+    "deco" : "FAAyaZi",
+    "parameters" : [
+     {
+      "name" : "argv",
+      "deco" : "AAya"
+     }
+    ],
+    "endline" : 58
+   }
+  ]
+ },
+ {
+  "name" : "utils",
+  "kind" : "module",
+  "file" : "utils.d",
+  "members" : [
+   {
+    "name" : "core.sys.windows.windows",
+    "kind" : "import",
+    "line" : 2,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.conv",
+    "kind" : "import",
+    "line" : 3,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.string",
+    "kind" : "import",
+    "line" : 4,
+    "protection" : "private"
+   },
+   {
+    "name" : "MultiByteToWideChar",
+    "kind" : "function",
+    "protection" : "private",
+    "line" : 6,
+    "deco" : "WkiPaiPuiZi",
+    "parameters" : [
+     {
+      "deco" : "k"
+     },
+     {
+      "deco" : "i"
+     },
+     {
+      "deco" : "Pa"
+     },
+     {
+      "deco" : "i"
+     },
+     {
+      "deco" : "Pu"
+     },
+     {
+      "deco" : "i"
+     }
+    ]
+   },
+   {
+    "name" : "toUtf",
+    "kind" : "function",
+    "line" : 9,
+    "deco" : "FAakZAyu",
+    "originalType" : "wstring(char[] s, uint codePage)",
+    "parameters" : [
+     {
+      "name" : "s",
+      "deco" : "Aa"
+     },
+     {
+      "name" : "codePage",
+      "deco" : "k"
+     }
+    ],
+    "endline" : 22
+   }
+  ]
+ }
+]

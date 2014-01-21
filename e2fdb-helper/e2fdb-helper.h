@@ -16,7 +16,7 @@ E2FDBHELPER_API const char* fdb_error();
 E2FDBHELPER_API int  fdb_provider_open(const char* serverName, const char* baseName, const char* user, const char* password);
 E2FDBHELPER_API bool fdb_provider_close(int provider);
 
-E2FDBHELPER_API int  fdb_transaction_open(int provider);
+E2FDBHELPER_API int  fdb_transaction_open(int provider, int am, int il, int lr);
 E2FDBHELPER_API bool fdb_transaction_close(int trans);
 E2FDBHELPER_API bool fdb_transaction_start(int trans);
 E2FDBHELPER_API bool fdb_transaction_commit(int trans);
@@ -31,7 +31,7 @@ E2FDBHELPER_API bool fdb_statement_execute_immediate(int st, const char* query);
 E2FDBHELPER_API bool fdb_statement_fetch(int st);
 
 E2FDBHELPER_API bool fdb_statement_set_null(int st, int index);
-E2FDBHELPER_API bool fdb_statement_set_int(int st, int index, int Value);
+E2FDBHELPER_API bool fdb_statement_set_int(int st, int index, int value);
 E2FDBHELPER_API bool fdb_statement_set_double(int st, int index, const double* value);
 E2FDBHELPER_API bool fdb_statement_set_string(int st, int index, const char* value);
 

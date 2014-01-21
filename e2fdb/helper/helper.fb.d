@@ -7,7 +7,7 @@ alias const char* function() fdb_error_fp;
 alias int  function(const char* serverName, const char* baseName, const char* user, const char* password) fdb_provider_open_fp;
 alias bool function(int provider) fdb_provider_close_fp;
 
-alias int  function(int provider) fdb_transaction_open_fp;
+alias int  function(int provider, int am, int il, int lr) fdb_transaction_open_fp;
 alias bool function(int trans) fdb_transaction_close_fp;
 alias bool function(int trans) fdb_transaction_start_fp;
 alias bool function(int trans) fdb_transaction_commit_fp;

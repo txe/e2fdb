@@ -1,4 +1,4 @@
 e2fdb
 =====
 
-takes edb files and converts it into fdb
+Takes edb files and converts it into fdb

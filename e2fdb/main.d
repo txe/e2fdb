@@ -5,6 +5,7 @@ import std.conv;
 import std.string;
 import std.parallelism;
 import edb.parser;
+import helper.fb;
 
 extern(Windows) int SetConsoleOutputCP(uint);
 
@@ -23,6 +24,8 @@ int main(string[] argv)
   // для генерации кода оберток
   // utils.h2d("c:\\e2fdb-helper.h", "c:\\txt.d", "fdb_", "dbDll");
   // return 0;
+
+  auto dll = new helper.fb.fbDll("e2fdb-helper.dll");
 
   SetConsoleOutputCP(65001);
 

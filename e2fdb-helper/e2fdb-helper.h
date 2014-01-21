@@ -5,9 +5,9 @@
 // E2FDBHELPER_API functions as being imported from a DLL, whereas this DLL sees symbols
 // defined with this macro as being exported.
 #ifdef E2FDBHELPER_EXPORTS
-#define E2FDBHELPER_API __declspec(dllexport)
+#define E2FDBHELPER_API extern "C" __declspec(dllexport)
 #else
-#define E2FDBHELPER_API __declspec(dllimport)
+#define E2FDBHELPER_API extern "C" __declspec(dllimport)
 #endif
 
 

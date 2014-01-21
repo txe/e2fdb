@@ -31,7 +31,7 @@ alias bool function(int st, int index, int* value) fdb_statement_get_int_fp;
 alias bool function(int st, int index, double* value) fdb_statement_get_double_fp;
 alias bool function(int st, int index, char* value) fdb_statement_get_string_fp;
 
-class dbDll
+class fbDll
 {
 private:
   HMODULE _module;

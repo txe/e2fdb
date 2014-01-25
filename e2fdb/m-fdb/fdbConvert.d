@@ -15,7 +15,10 @@ public:
     foreach (section; edbStruct._sections)
       if (IdSection s = cast (IdSection) section)
       {
+        packet._id = s._baseId;     // добавить проверку
         packet._name = s._baseName; // добавить проверку
+        if (packet._id.length == 0)
+          packet._id = packet._name;
         break;
       }
 
@@ -66,5 +69,8 @@ private:
   {
 
   }
+  /++++++++++++++++++++++++++++/
+
+
 
 }

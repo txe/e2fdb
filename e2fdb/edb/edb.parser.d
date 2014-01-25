@@ -124,7 +124,10 @@ public:
     {
       foreach (s; _sections)
         if (auto dataSection = cast(DataSection) s)
+        {
+          ChechAttInComment(dataSection);
           CalculateTypeList(dataSection);
+        }
     }
     catch (Exception e)
       throw e;
@@ -150,7 +153,7 @@ private:
   void InComment(EdbSection section, wstring line) 
   { 
     if (auto s = cast(DataSection) section)
-      s._comments ~= line;
+      ParseDataSectionComment(s, line);
   }
   /+--------------------------+/
   bool IsCommentEnd(wstring line) 
@@ -228,6 +231,45 @@ private:
     if (!ParseDataSectionParam(section, line))
       ParseDataSectionElement(section, line);
   };
+  /+--------------------------+/
+  void ParseDataSectionComment(DataSection section, wstring line)
+  {
+    wstring[] words = line.split(" ");
+    if (words.length < 3)
+      return;
+    // первая часть должна быть числом
+    static auto ints = "0123456789";
+    foreach (ch; words[0])
+      if (ints.indexOf(ch) == -1)
+        return;
+    // потом черта
+    if (words[1] != "-")
+      return;
+
+    int num = to!int(words[0]);
+   
+    // возьмем данные послед черты
+    line = line[line.indexOf("-") .. $];
+    words = line.split("|");
+
+    auto atr = new AtrInComment();
+    if (words.length > 0) atr.name = words[0].strip;
+    if (words.length > 1) atr.desc = words[1].strip;
+    if (words.length > 2) atr.formula = words[2].strip;
+    if (atr.name.length == 0)
+      atr.name = "Безымянный атрибут";
+
+    // проверка на повторяемость
+    if (section._atrs.length == 0)
+      if (num != 0)
+        throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": номер первого атрибута в комментариях должно начинатся с нуля");
+
+    if (num > 0)
+      if (!((num - 1) in section._atrs))
+        throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": номер атрибута в комментариях должно должно быть больше на 1, чем предыдущий атрибут");
+
+    section._atrs[num] = atr;
+  }
   /+--------------------------+/
   bool ParseDataSectionParam(DataSection section, wstring line)
   {
@@ -572,6 +614,16 @@ private:
       words ~= line[beginWord..$];
 
     return words;
+  }
+  /+--------------------------+/
+  void ChechAttInComment(DataSection section)
+  {
+    foreach (DataSectionElement el; section._elements)
+      foreach (int row, wstring[] simple; el._simples)
+        if (section._atrs.length != simple.length)
+          throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": совпадает кол-во атрибутов (" ~ to!string(section._atrs.length) ~ ") и значений в типоразмере (" ~ to!string(simple.length) ~ ") в строке " ~ to!string(row));
+        else
+          return;
   }
   /+--------------------------+/
   void CalculateTypeList(DataSection section)

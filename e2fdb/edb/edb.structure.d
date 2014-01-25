@@ -42,6 +42,13 @@ class DataSectionElement
   wstring[][int] _simples;
 }
 /++++++++++++++++++++++++++++/
+class AtrInComment
+{
+  wstring name;
+  wstring desc;
+  wstring formula;
+}
+/++++++++++++++++++++++++++++/
 class DataSection : EdbSection 
 {
   int     _num;
@@ -54,8 +61,9 @@ class DataSection : EdbSection
   int     _paramControl;
   wstring _paramComment1;
   wstring _paramComment2;
-  wstring[] _comments;
-  wstring _typeList;
+
+  wstring              _typeList;
+  AtrInComment[int]   _atrs;
   DataSectionElement[] _elements;
 
   DataSectionElement AddElement()

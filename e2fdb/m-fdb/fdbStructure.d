@@ -3,7 +3,8 @@ module fdb.fdbStructure;
 /++++++++++++++++++++++++++++/
 class FdbPacket
 {
-  wstring      _name;
+  wstring     _id;
+  wstring     _name;
   FdbVirtData _fdbVirtData;    
 }
 /++++++++++++++++++++++++++++/

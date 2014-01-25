@@ -4,12 +4,6 @@ private import std.stdio;
 private import std.conv;
 
 /++++++++++++++++++++++++++++/
-class EdbFileParserException : Exception
-{
-  this(string msg)  { super(msg); }
-  this(wstring msg) { super(to!string(msg)); }
-}
-/++++++++++++++++++++++++++++/
 class EdbSection 
 {
 }
@@ -98,7 +92,7 @@ class AliasSection :EdbSection
   wstring[int] _params;
 }
 /++++++++++++++++++++++++++++/
-struct EdbFile
+struct EdbStructure
 {
   EdbSection[] _sections;
 }

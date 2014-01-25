@@ -4,7 +4,7 @@
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
-  <subsystem>0</subsystem>
+  <subsystem>1</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
@@ -35,10 +35,10 @@
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
-  <warnings>0</warnings>
-  <infowarnings>0</infowarnings>
+  <warnings>1</warnings>
+  <infowarnings>1</infowarnings>
   <checkProperty>0</checkProperty>
-  <genStackFrame>0</genStackFrame>
+  <genStackFrame>1</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
@@ -196,6 +196,15 @@
   </Folder>
   <Folder name="helper">
    <File path="helper\helper.fb.d" />
+  </Folder>
+  <Folder name="m-console">
+   <File path="m-console\consoleWriter.d" />
+  </Folder>
+  <Folder name="m-fdb">
+   <File path="m-fdb\writeManager.d" />
+  </Folder>
+  <Folder name="m-files">
+   <File path="m-files\fileStorage.d" />
   </Folder>
   <File path="main.d" />
   <File path="utils.d" />

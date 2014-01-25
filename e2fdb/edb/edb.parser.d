@@ -16,6 +16,13 @@ private import utils;
 private alias Tuple!(wstring, "key", wstring, "value") KeyValue;
 
 /++++++++++++++++++++++++++++/
+class EdbFileParserException : Exception
+{
+  this(string msg)  { super(msg); }
+  this(wstring msg) { super(to!string(msg)); }
+}
+
+/++++++++++++++++++++++++++++/
 class EdbParserException : Exception
 {
   this(string msg, int row = -1, wstring line = "")
@@ -54,7 +61,7 @@ private:
 public:
   
   /+--------------------------+/
-  EdbFile Parse(string edbPath)
+  EdbStructure Parse(string edbPath)
   {
     //writeln(edbPath);
     auto bytes = cast(char[]) read(edbPath);
@@ -123,7 +130,7 @@ public:
       throw e;
 
 
-    auto edbFile = EdbFile();
+    auto edbFile = EdbStructure();
     edbFile._sections = _sections;
     return edbFile;
   }
@@ -466,6 +473,7 @@ private:
       int beginWord = -1;
       for (int i = 0; i < param.value.length; ++i)
         if (param.value[i] == '"')
+        {
           if (comm == false)
           {
             beginWord = i;
@@ -476,6 +484,7 @@ private:
             comm = false;
             words ~= param.value[beginWord .. i];
           }
+        }
       if (comm)
         throw new EdbParserException("ALIAS: неверный формат, возможно не закрыта строка");
       

@@ -6,6 +6,7 @@ import std.string;
 import std.parallelism;
 import edb.parser;
 import helper.fb;
+import fdb.writeManager;
 
 extern(Windows) int SetConsoleOutputCP(uint);
 
@@ -59,20 +60,13 @@ int main(string[] argv)
   //auto dll = new helper.fb.fbDll("e2fdb-helper.dll");
 
   SetConsoleOutputCP(65001);
+  const path = "e:\\edb";
 
-  writeln("Collecting files before read ...");
-
-  const path = "d:\\edb";
+  writeln("Collecting files before ...");
   string[] edbFiles = get_files(path, "*.edb");
 
-  struct PacketWriter
-  {
-    void Push(string[] files) {};
-  }
-
-  PacketWriter writer;
   if (TestBase(edbFiles))
-    writer.Push(edbFiles);
+    WriteManager().Run(edbFiles);
 
   write("\npress enter to exit:");
   readln();

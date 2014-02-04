@@ -715,6 +715,9 @@ private:
   {
     if (section._typeList.length == 0)
       throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": Нет TYPES");
+    foreach (int pos, t; section._typeList)
+      if (t != 'S' && t != 'I' && t != 'F')
+        throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": неизвестный тип: " ~ t ~", позиция: " ~ to!wstring(pos) ~ ", строка типов: " ~ section._typeList);
 
     wstring line(int col, SimpleValue[] simples)
     {

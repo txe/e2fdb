@@ -51,7 +51,17 @@ private:
   /++++++++++++++++++++++++++++/
   void CreateTableAttr(FdbVirtData virtData, DataSection sec)
   {
-    
+    foreach (int i, edbAtr; sec._atrs)
+    {
+      auto atr = new FdbAttribute;
+      atr._num = i;
+      atr._name = edbAtr.name;
+      atr._desc = edbAtr.desc;
+
+      if (sec._typeList[i] == 'S')       atr._type = FdbAttribute.Type.String;
+      else if (sec._typeList[i] == 'I')  atr._type = FdbAttribute.Type.Int;
+      else if (sec._typeList[i] == 'F')  atr._type = FdbAttribute.Type.Double;
+    }
   }
   /++++++++++++++++++++++++++++/
   void CreateFormulaAttr(FdbVirtData virtData, AliasSection sec)

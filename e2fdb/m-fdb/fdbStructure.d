@@ -25,9 +25,11 @@ class FdbTemplate
 /++++++++++++++++++++++++++++/
 class FdbAttribute
 {
-  int    _num;
-  int    _oldNum;
-  wstring _type;
+  enum Type {Int = 1, Double = 2, String = 3}
+
+  int     _num;
+  int     _oldNum;
+  Type    _type;
   wstring _name;
   wstring _desc;
   wstring _measure;

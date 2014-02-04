@@ -45,6 +45,9 @@ bool TestBase(string[] edbFiles)
       problems ~= e.msg;
     }
 
+  if (edbFiles.length == 0)
+    problems ~= "Отсутствуют файлы";
+
   if (problems)
     foreach (problem; problems)
       writeln(problem);
@@ -60,7 +63,7 @@ int main(string[] argv)
   //auto dll = new helper.fb.fbDll("e2fdb-helper.dll");
 
   SetConsoleOutputCP(65001);
-  const path = "e:\\edb";
+  const path = "d:\\edb";
 
   writeln("Collecting files before ...");
   string[] edbFiles = get_files(path, "*.edb");

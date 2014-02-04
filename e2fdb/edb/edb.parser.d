@@ -4,7 +4,7 @@ private import std.stdio;
 private import std.file;
 private import std.string;
 private import std.typecons;
-private import std.algorithm : replace;
+private import std.algorithm : replace, map;
 private import std.conv;
 private import std.path;
 
@@ -60,6 +60,7 @@ private:
 
 public:
   
+  /+--------------------------+/
   /+--------------------------+/
   EdbStructure Parse(string edbPath)
   {
@@ -126,7 +127,8 @@ public:
         if (auto dataSection = cast(DataSection) s)
         {
           ChechAttInComment(dataSection);
-          CalculateTypeList(dataSection);
+          GenerateTypeList(dataSection);
+          CheckTypeList(dataSection);
         }
     }
     catch (Exception e)
@@ -140,15 +142,18 @@ public:
 
 private:
   /+--------------------------+/
+  /+--------------------------+/
   bool IsSkipLine(wstring line) 
   { 
     return line == "" || startsWith(line, "//"); 
   }
   /+--------------------------+/
+  /+--------------------------+/
   bool IsCommentBegin(wstring line) 
   { 
     return startsWith(line, "/*"); 
   }
+  /+--------------------------+/
   /+--------------------------+/
   void InComment(EdbSection section, wstring line) 
   { 
@@ -156,10 +161,12 @@ private:
       ParseDataSectionComment(s, line);
   }
   /+--------------------------+/
+  /+--------------------------+/
   bool IsCommentEnd(wstring line) 
   { 
     return startsWith(line, "*/"); 
   }
+  /+--------------------------+/
   /+--------------------------+/
   EdbSection IsSectionBegin(wstring line) 
   { 
@@ -195,10 +202,12 @@ private:
     return section;
   }
   /+--------------------------+/
+  /+--------------------------+/
   bool IsSectionEnd(wstring line) 
   { 
     return line == "[END]"; 
   }
+  /+--------------------------+/
   /+--------------------------+/
   void ParseIdSection(IdSection section, wstring line) 
   {
@@ -219,6 +228,7 @@ private:
     }
   };
   /+--------------------------+/
+  /+--------------------------+/
   void ParseTreeSection(TreeSection section, wstring line) 
   {
     auto params = split(line, "#");
@@ -226,11 +236,13 @@ private:
       section._params ~= params;
   };
   /+--------------------------+/
+  /+--------------------------+/
   void ParseDataSection(DataSection section, wstring line) 
   {
     if (!ParseDataSectionParam(section, line))
       ParseDataSectionElement(section, line);
   };
+  /+--------------------------+/
   /+--------------------------+/
   void ParseDataSectionComment(DataSection section, wstring line)
   {
@@ -259,6 +271,13 @@ private:
     if (atr.name.length == 0)
       atr.name = "Безымянный атрибут";
 
+    if (words.length == 0)
+      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": старый формат атрибутов, т.к. не содежит |");
+    if (atr.name.length > 127)
+      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": длина названия атрибута не должна превышать 127 символов");
+    if (atr.desc.length > 127)
+      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": длина описания атрибута не должна превышать 127 символов");
+
     // проверка на повторяемость
     if (section._atrs.length == 0)
       if (num != 0)
@@ -270,6 +289,7 @@ private:
 
     section._atrs[num] = atr;
   }
+  /+--------------------------+/
   /+--------------------------+/
   bool ParseDataSectionParam(DataSection section, wstring line)
   {
@@ -354,6 +374,7 @@ private:
     return true;
   }
   /+--------------------------+/
+  /+--------------------------+/
   void ParseDataSectionElement(DataSection section, wstring line)
   {
     if (section._elements.length == 0)
@@ -367,13 +388,20 @@ private:
       if (section._typeList.length != values.length)
         throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c длиной строки типов (" ~ to!string(section._typeList.length) ~ ")");
     // не правильно работает из за simple
-    //if (section._typeList.length == 0)
-    //  if (section._elements.length > 0 && section.elements[0].simples.length > 0)
-    //    if (section._elements[0]._simples.length != values.length)
-    //      throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c кол-вом атрибутов в предыдущего типоразмера (" ~ to!string(section.elements[0].simples.length) ~ ")");
+    if (section._typeList.length == 0)
+      if (section._elements.length > 0 && section._elements[0]._simples.length > 0)
+      {
+        int beforeCount = section._elements[0]._simples.byValue.front.length;
+        if (beforeCount != values.length)
+          throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c кол-вом атрибутов в предыдущего типоразмера (" ~ to!string(beforeCount) ~ ")");
+      }
 
-    section._elements[$-1]._simples[GetCurRow()] = values;
+    SimpleValue[] simples;
+    foreach (val; values)
+      simples ~= Str2SimpleValue(val);
+    section._elements[$-1]._simples[GetCurRow()] = simples;
   }
+  /+--------------------------+/
   /+--------------------------+/
   void ParsePropSection(PropSection section, wstring line) 
   {
@@ -424,6 +452,7 @@ private:
     }
   }
   /+--------------------------+/
+  /+--------------------------+/
   void ParseSpecSection(SpecSection section, wstring line) 
   {
     KeyValue* val = ParseKeyValue(line);
@@ -456,6 +485,7 @@ private:
         }
     }
   }
+  /+--------------------------+/
   /+--------------------------+/
   void ParseAliasSection(AliasSection section, wstring line) 
   {
@@ -548,6 +578,7 @@ private:
     }
   };
   /+--------------------------+/
+  /+--------------------------+/
   KeyValue* ParseKeyValue(wstring line)
   {
     // key = value
@@ -556,6 +587,7 @@ private:
       return null;
     return new KeyValue(line[0 .. pos].strip, line[pos + 1 .. $].strip);
   }
+  /+--------------------------+/
   /+--------------------------+/
   wstring[] SmartSplit(wstring line)
   {
@@ -616,17 +648,29 @@ private:
     return words;
   }
   /+--------------------------+/
+  /+--------------------------+/
   void ChechAttInComment(DataSection section)
   {
+    // проверим что данных в DATA столько же сколько атрибутов
     foreach (DataSectionElement el; section._elements)
-      foreach (int row, wstring[] simple; el._simples)
+      foreach (int row, SimpleValue[] simple; el._simples)
         if (section._atrs.length != simple.length)
-          throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": совпадает кол-во атрибутов (" ~ to!string(section._atrs.length) ~ ") и значений в типоразмере (" ~ to!string(simple.length) ~ ") в строке " ~ to!string(row));
+          throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": не совпадает кол-во атрибутов (" ~ to!string(section._atrs.length) ~ ") и значений в типоразмере (" ~ to!string(simple.length) ~ ") в строке " ~ to!string(row));
         else
           return;
   }
   /+--------------------------+/
-  void CalculateTypeList(DataSection section)
+  /+--------------------------+/
+  void GenerateTypeList(DataSection section)
+  {
+    if (section._typeList.length != 0)
+      return;
+
+    
+  }
+  /+--------------------------+/
+  /+--------------------------+/
+  void CheckTypeList(DataSection section)
   {
     if (section._typeList.length == 0)
     {
@@ -635,10 +679,10 @@ private:
     }
     // кол-во атрибутов в типеразмере уже проверили при чтении
     foreach (DataSectionElement el; section._elements)
-      foreach (int row, wstring[] simple; el._simples)
-        foreach (int col, wstring val; simple)
+      foreach (int row, SimpleValue[] simples; el._simples)
+        foreach (int col, SimpleValue val; simples)
         {
-          if (val == "\" \"" || val == "\"-\"")
+    /*      if (val.str == "\" \"" || val == "\"-\"")
             continue;
           // если тип S, то должны быть кавычки
           if (section._typeList[col] == 'S')
@@ -656,6 +700,48 @@ private:
               wstring line = "... " ~ join(simple[col .. col + five], " ") ~ " ...";
               throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип '"~ section._typeList[col] ~"', хотя записан с кавычками, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line);
             }
-        }
+      */  }
+  }
+  /+--------------------------+/
+  /+--------------------------+/
+  static SimpleValue Str2SimpleValue(wstring val)
+  {
+    bool IsInt(wstring str)
+    {
+      foreach (index, ch; str)
+      {
+        if (ch >= '0' && ch <= '9')  continue;
+        if (index == 0 && ch == '-') continue;
+        return false;
+      }
+      return true;
+    }
+    bool IsDoubleEx(wstring str)
+    {
+      int dots = 0;
+      foreach (index, ch; str)
+      {
+        if (ch >= '0' && ch <= '9')
+          continue;
+        if (ch == '-' && index == 0)
+          continue;
+        if ((ch == '.' || ch == ',') && dots++ == 0 && index != 0)
+          continue;
+        return false;
+      }
+      return true;
+    }
+
+    if (val == "\" \"" || val == "\"-\"")
+      return SimpleValue(val, SimpleValue.ValueType.Null);
+    if (val.startsWith("\""))
+      return SimpleValue(val, SimpleValue.ValueType.String);
+    if (IsInt(val))
+      return SimpleValue(val, SimpleValue.ValueType.Int);
+    if (IsDoubleEx(val))
+      return SimpleValue(val, SimpleValue.ValueType.Double);
+    if (IsDoubleEx(val))
+      return SimpleValue(val, SimpleValue.ValueType.Double);
+    throw new EdbParserException("Str2SimpleValue: непонятный тип для: " ~ val);
   }
 }

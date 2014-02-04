@@ -39,7 +39,7 @@ class DataSectionElement
   wstring _name;
   wstring _folder = null;
   Prj[]   _prjs;
-  wstring[][int] _simples;
+  SimpleValue[][int] _simples;
 }
 /++++++++++++++++++++++++++++/
 class AtrInComment
@@ -103,5 +103,14 @@ class AliasSection :EdbSection
 struct EdbStructure
 {
   EdbSection[] _sections;
+}
+/++++++++++++++++++++++++++++/
+struct SimpleValue
+{
+  enum ValueType {Null, Int, Double, String};
+  ValueType _type;
+  wstring   _value;
+
+  this(wstring value, ValueType type) { _value = value; _type = type; }
 }
 

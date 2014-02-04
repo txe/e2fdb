@@ -11,7 +11,7 @@ class FdbPacket
 class FdbVirtData
 {
   FdbAttribute[]         _atrs;
-  FdbTemplate[][wstring] _folders;  // folderPath -> FdbTemplates  
+  FdbTemplate[][wstring] _folders;  // folderPath -> FdbTemplates
 }
 /++++++++++++++++++++++++++++/
 class FdbTemplate

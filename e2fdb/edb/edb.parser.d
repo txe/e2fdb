@@ -4,10 +4,10 @@ private import std.stdio;
 private import std.file;
 private import std.string;
 private import std.typecons;
-private import std.algorithm : replace, map;
+private import std.algorithm : replace, map, fill;
 private import std.conv;
 private import std.path;
-
+private import std.array;
 private import edb.structure;
 private import edb.formula;
 private import utils;
@@ -387,8 +387,8 @@ private:
     if (section._typeList.length != 0)
       if (section._typeList.length != values.length)
         throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c длиной строки типов (" ~ to!string(section._typeList.length) ~ ")");
-    // не правильно работает из за simple
-    if (section._typeList.length == 0)
+    // проверить что не работает когда было section._typeList.length == 0
+    // if (section._typeList.length == 0)
       if (section._elements.length > 0 && section._elements[0]._simples.length > 0)
       {
         int beforeCount = section._elements[0]._simples.byValue.front.length;
@@ -666,41 +666,82 @@ private:
     if (section._typeList.length != 0)
       return;
 
+    // просто пустышка
+    int len = section._elements[0]._simples.byValue.front.length;
+    wchar[] types = new wchar[len];
+    foreach (ref t; types)
+      t = 'N';
     
+    // заполним только те колонки где могут быть только строки
+    foreach (int i, ref t; types)
+      FOR_EL: foreach (DataSectionElement el; section._elements)
+        foreach (int row, SimpleValue[] simples; el._simples)
+          if (simples[i]._type == SimpleValue.ValueType.String)
+          {
+            t = 'S';
+            break FOR_EL;
+          }
+    // для них будут Int
+    //db::cProperties::Controls& controls = m_pElement->m_pData->m_Properties.m_Controls;
+    // for( uint i = 0; i < controls.size(); ++i )
+    //  if( controls[i].iAttr == nNumber )
+    //    if( controls[i].Type == db::cProperties::e_Check )
+    //      return e_Int;
+    foreach (int i, ref t; types)
+    {
+      if (t != 'N')
+        continue;
+      wstring name = section._atrs[i].name.toLower;
+      wstring desc = section._atrs[i].desc.toLower;
+      if (name.indexOf("code") == 0 ||
+          desc.indexOf("код") == 0 ||
+          desc.indexOf("кол.") != -1 ||
+          desc.indexOf("колич") != -1 ||
+          desc.indexOf("кол-") != -1)
+        t = 'I';
+      else if (desc.indexOf("текст") == 0 || name == "mark")
+        t = 'S';
+    }
+    
+    foreach (ref t; types)
+      if (t == 'N')
+        t = 'F';
+
+    section._typeList = to!wstring(types);
   }
   /+--------------------------+/
   /+--------------------------+/
   void CheckTypeList(DataSection section)
   {
     if (section._typeList.length == 0)
+      throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": Нет TYPES");
+
+    wstring line(int col, SimpleValue[] simples)
     {
-      return;
-      //throw new EdbParserException("Нет TYPES");
+      int five = section._typeList.length > (col + 5) ? 5 : section._typeList.length - col;
+      wstring text = "... ";
+      foreach (str; simples[col .. col + five])
+        text ~= str._value ~ " ";
+      text ~= "...";
+      return text;
     }
+
     // кол-во атрибутов в типеразмере уже проверили при чтении
+    // проверим что тип из СТРОКИ ТИПОВ подходит для значения
     foreach (DataSectionElement el; section._elements)
       foreach (int row, SimpleValue[] simples; el._simples)
         foreach (int col, SimpleValue val; simples)
         {
-    /*      if (val.str == "\" \"" || val == "\"-\"")
+          if (val._type == SimpleValue.ValueType.Null)
             continue;
-          // если тип S, то должны быть кавычки
-          if (section._typeList[col] == 'S')
-            if (!startsWith(val, '"'))
-            {
-              int five = section._typeList.length > (col + 5) ? 5 : section._typeList.length - col;
-              wstring line = "... " ~ join(simple[col .. col + five], " ") ~ " ...";
-              //throw new EdbParserException("DATA_" ~ to!wstring(section.num) ~ ": атрибут имеет тип 'S', но записан без кавычек, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section.typeList.length), row, line);
-            }
-          // если тип не S, то кавычки не должны быть
-          if (section._typeList[col] != 'S')
-            if (startsWith(val, '"'))
-            {
-              int five = section._typeList.length > (col + 5) ? 5 : section._typeList.length - col;
-              wstring line = "... " ~ join(simple[col .. col + five], " ") ~ " ...";
-              throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип '"~ section._typeList[col] ~"', хотя записан с кавычками, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line);
-            }
-      */  }
+          const wchar t = section._typeList[col];
+          if (val._type == SimpleValue.ValueType.String && t != 'S')
+            throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип '" ~ t ~ "', но значение записано как строка, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
+      //  else  if (val._type != SimpleValue.ValueType.String && t == 'S')
+      //      throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип 'S', но значение не записано как строка, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
+          else if (val._type == SimpleValue.ValueType.Double && t == 'I')
+            throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип 'I', но значение записано как 'F', номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
+        }
   }
   /+--------------------------+/
   /+--------------------------+/
@@ -732,10 +773,15 @@ private:
       return true;
     }
 
-    if (val == "\" \"" || val == "\"-\"")
+    if (val == "" || val == "\" \"" || val == "\"-\"")
       return SimpleValue(val, SimpleValue.ValueType.Null);
     if (val.startsWith("\""))
-      return SimpleValue(val, SimpleValue.ValueType.String);
+    {
+      if (val[1 .. $-1].strip == "")
+        return SimpleValue("", SimpleValue.ValueType.Null);
+      else
+        return SimpleValue(val, SimpleValue.ValueType.String);
+    }
     if (IsInt(val))
       return SimpleValue(val, SimpleValue.ValueType.Int);
     if (IsDoubleEx(val))

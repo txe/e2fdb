@@ -15,10 +15,10 @@ class FdbConnect
     _dll.Free();
   }
 
-  bool Connect(string server, string basePath, string user, string password)
+  bool Connect(string basePath, string user, string password)
   {
     _dll.Load("e2fdb-helper.dll");
-    _provider = _dll.fdb_provider_open(server.toStringz, basePath.toStringz, user.toStringz, password.toStringz);
+    _provider = _dll.fdb_provider_open("".toStringz, basePath.toStringz, user.toStringz, password.toStringz);
     return _provider > 0;
   }
 
@@ -35,10 +35,10 @@ class FdbConnect
     return f;
   }
 
-  FdbStatement OpenStatement(FdbTransaction transaction)
+  FdbStatementRef OpenStatement(FdbTransaction transaction)
   {
     int st = _dll.fdb_statement_open(_provider, transaction._tran);
-    return FdbStatement(this, st);
+    return FdbStatementRef(this, st);
   }
 }
 
@@ -63,51 +63,75 @@ class FdbTransaction
   bool Rollback() { return _connect._dll.fdb_transaction_rollback(_tran); }
 }
 
-struct FdbStatement
+struct FdbStatementRef
 {
-  private FdbConnect _connect;
-  private int _st;
+  FdbConnect _connect;
+  int _st;
 
   this(FdbConnect connect, int st)
   {
     _st = st;
     _connect = connect;
   }
+}
+
+struct FdbStatement
+{
+  private FdbConnect _connect;
+  private int _st;
+
+  this(FdbStatementRef r)
+  {
+    _st = r._st;
+    _connect = r._connect;
+  }
 
   ~this() { _connect._dll.fdb_statement_close(_st); }
 
-  bool Prepare(string query)
+  ref FdbStatement Prepare(string query)
   { 
-    return _connect._dll.fdb_statement_prepare(_st, query.ptr);
+    _connect._dll.fdb_statement_prepare(_st, query.toStringz);
+    return this;
   }
-  bool Execute(string query)
+  ref FdbStatement Execute(string query = "")
   {
-    return _connect._dll.fdb_statement_execute(_st, query.ptr);
+    _connect._dll.fdb_statement_execute(_st, query.toStringz);
+    return this;
   }
-  bool ExecuteImmediate(string query)
+  ref FdbStatement ExecuteImmediate(string query)
   {
-    return _connect._dll.fdb_statement_execute_immediate(_st, query.ptr);
+    _connect._dll.fdb_statement_execute_immediate(_st, query.toStringz);
+    return this;
   }
   bool Fetch()
   {
     return _connect._dll.fdb_statement_fetch(_st);
   }
 
-  bool SetNull(int index)
+  ref FdbStatement SetNull(int index)
   { 
-    return _connect._dll.fdb_statement_set_null(_st, index);
+    _connect._dll.fdb_statement_set_null(_st, index);
+    return this;
   }
-  bool SetInt(int index, int val)
+  ref FdbStatement Set(int index, int val)
   { 
-    return _connect._dll.fdb_statement_set_int(_st, index, val);
+    _connect._dll.fdb_statement_set_int(_st, index, val);
+    return this;
   }
-  bool SetDouble(int index, ref double val)
+  ref FdbStatement Set(int index, ref double val)
   { 
-    return _connect._dll.fdb_statement_set_double(_st, index, &val);
+    _connect._dll.fdb_statement_set_double(_st, index, &val);
+    return this;
   }
-  bool SetString(int index, string val)
+  ref FdbStatement Set(int index, string val)
   {
-    return _connect._dll.fdb_statement_set_string(_st, index, val.ptr); 
+    _connect._dll.fdb_statement_set_string(_st, index, val.toStringz);
+    return this;
+  }
+  ref FdbStatement Set(int index, wstring val)
+  {
+    _connect._dll.fdb_statement_set_string(_st, index, to!string(val).toStringz);
+    return this;
   }
 
   bool IsNull(int index)

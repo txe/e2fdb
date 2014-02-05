@@ -27,11 +27,12 @@ public:
   /++++++++++++++++++++++++++++/
   void Run(string[] edbFiles)
   {
-    auto thisDir = std.file.thisExePath.dirName;
+    string thisDir = std.file.thisExePath.dirName;
     std.file.copy(thisDir ~ "/blank.fdb", thisDir ~ "/breeze.fdb");
 
-    _provider.Connect("", to!string(thisDir ~ "\\breeze.fdb"), "sysdba", "masterkey");
+    _provider.Connect(thisDir ~ "\\breeze.fdb", "sysdba", "masterkey");
     _trans = _provider.OpenTransaction(FdbTransaction.TAM.amWrite, FdbTransaction.TIL.ilReadCommitted, FdbTransaction.TLR.lrNoWait);
+    _trans.Start;
     
     _console.Init();
     _fileStorage.Init();
@@ -49,7 +50,7 @@ public:
 
 private:
   /++++++++++++++++++++++++++++/
-  FdbStatement GetStatement()
+  FdbStatementRef GetStatement()
   {
     return _provider.OpenStatement(_trans);
   }
@@ -66,8 +67,14 @@ private:
   /++++++++++++++++++++++++++++/
   void WritePacket(FdbPacket fdbPacket)
   {
-    auto st = GetStatement();
+    FdbStatement st = GetStatement();
+    // создать рутовый фолдер
+    fdbPacket._rRootId = st.Prepare("INSERT INTO FOLDER (NAME, ID_PARENT) VALUES (?, ?) RETURNING ID").Set(1, fdbPacket._name).SetNull(2).Execute().GetInt(1);
+    // создать пакет
+    fdbPacket._rId = st.Prepare("INSERT INTO PACKET (PACKETID, FOLDERID) VALUES (?, ?) RETURNING ID").Set(1, fdbPacket._id).Set(2, fdbPacket._rRootId).Execute().GetInt(1);
+    // создадим карту фолдеров
     
+
 
   }
   /++++++++++++++++++++++++++++/

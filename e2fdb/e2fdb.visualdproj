@@ -201,6 +201,7 @@
    <File path="m-console\consoleWriter.d" />
   </Folder>
   <Folder name="m-fdb">
+   <File path="m-fdb\fdbConnect.d" />
    <File path="m-fdb\fdbConvert.d" />
    <File path="m-fdb\fdbStructure.d" />
    <File path="m-fdb\writeManager.d" />

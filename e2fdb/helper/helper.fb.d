@@ -2,36 +2,36 @@ module helper.fb;
 import std.c.windows.windows;
 
 
-alias const char* function() fdb_error_fp;
+alias extern(Windows) const(char*) function() fdb_error_fp;
 
-alias int  function(const char* serverName, const char* baseName, const char* user, const char* password) fdb_provider_open_fp;
-alias bool function(int provider) fdb_provider_close_fp;
+alias extern(Windows) int  function(const char* serverName, const char* baseName, const char* user, const char* password) fdb_provider_open_fp;
+alias extern(Windows) bool function(int provider) fdb_provider_close_fp;
 
-alias int  function(int provider, int am, int il, int lr) fdb_transaction_open_fp;
-alias bool function(int trans) fdb_transaction_close_fp;
-alias bool function(int trans) fdb_transaction_start_fp;
-alias bool function(int trans) fdb_transaction_commit_fp;
-alias bool function(int trans) fdb_transaction_rollback_fp;
+alias extern(Windows) int  function(int provider, int am, int il, int lr) fdb_transaction_open_fp;
+alias extern(Windows) bool function(int trans) fdb_transaction_close_fp;
+alias extern(Windows) bool function(int trans) fdb_transaction_start_fp;
+alias extern(Windows) bool function(int trans) fdb_transaction_commit_fp;
+alias extern(Windows) bool function(int trans) fdb_transaction_rollback_fp;
 
-alias int  function(int provider, int trans) fdb_statement_open_fp;
-alias bool function(int st) fdb_statement_close_fp;
+alias extern(Windows) int  function(int provider, int trans) fdb_statement_open_fp;
+alias extern(Windows) bool function(int st) fdb_statement_close_fp;
 
-alias bool function(int st, const char* query) fdb_statement_prepare_fp;
-alias bool function(int st, const char* query) fdb_statement_execute_fp;
-alias bool function(int st, const char* query) fdb_statement_execute_immediate_fp;
-alias bool function(int st) fdb_statement_fetch_fp;
+alias extern(Windows) bool function(int st, const char* query) fdb_statement_prepare_fp;
+alias extern(Windows) bool function(int st, const char* query) fdb_statement_execute_fp;
+alias extern(Windows) bool function(int st, const char* query) fdb_statement_execute_immediate_fp;
+alias extern(Windows) bool function(int st) fdb_statement_fetch_fp;
 
-alias bool function(int st, int index) fdb_statement_set_null_fp;
-alias bool function(int st, int index, int Value) fdb_statement_set_int_fp;
-alias bool function(int st, int index, const double* value) fdb_statement_set_double_fp;
-alias bool function(int st, int index, const char* value) fdb_statement_set_string_fp;
+alias extern(Windows) bool function(int st, int index) fdb_statement_set_null_fp;
+alias extern(Windows) bool function(int st, int index, int Value) fdb_statement_set_int_fp;
+alias extern(Windows) bool function(int st, int index, const double* value) fdb_statement_set_double_fp;
+alias extern(Windows) bool function(int st, int index, const char* value) fdb_statement_set_string_fp;
 
-alias bool function(int st, int index) fdb_statement_get_is_null_fp;
-alias bool function(int st, int index, int* value) fdb_statement_get_int_fp;
-alias bool function(int st, int index, double* value) fdb_statement_get_double_fp;
-alias bool function(int st, int index, char* value) fdb_statement_get_string_fp;
+alias extern(Windows) bool function(int st, int index) fdb_statement_get_is_null_fp;
+alias extern(Windows) bool function(int st, int index, int* value) fdb_statement_get_int_fp;
+alias extern(Windows) bool function(int st, int index, double* value) fdb_statement_get_double_fp;
+alias extern(Windows) bool function(int st, int index, char* value) fdb_statement_get_string_fp;
 
-class fbDll
+struct fbDll
 {
 private:
   HMODULE _module;
@@ -66,10 +66,10 @@ public:
   fdb_statement_get_double_fp fdb_statement_get_double;
   fdb_statement_get_string_fp fdb_statement_get_string;
 
-  this(const(char*) name)
+  void Load(const(char*) name)
   {
     _module = LoadLibraryA(name);
-    if (_module == null)  throw new Exception("_module == null");
+    if (_module == null)  throw new Exception("fbDll._module == null");
 
     fdb_error = cast(fdb_error_fp) GetProcAddress(_module, "fdb_error");
     if (fdb_error == null) throw new Exception("fdb_error == null");
@@ -123,9 +123,10 @@ public:
     if (fdb_statement_get_string == null) throw new Exception("fdb_statement_get_string == null");
   }
 
-  ~this()
+  void Free()
   {
     FreeLibrary(_module);
+    _module = null;
   }
 
 }

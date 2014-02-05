@@ -6,19 +6,32 @@ private import files.fileStorage;
 private import console.consoleWriter;
 private import edb.structure;
 private import fdb.fdbConvert;
+private import fdb.fdbStructure;
+private import fdb.fdbConnect;
+private import std.conv;
 
 struct WriteManager
 {
 private:
-  ConsoleWriter _console;
-  FileStorage   _fileStorage;
+  ConsoleWriter  _console;
+  FileStorage    _fileStorage;
+  FdbConnect     _provider;
+  FdbTransaction _trans;
 
 public:
+  ~this()
+  {
+   // _trans.Close();
+    _provider.Disconnect();
+  }
   /++++++++++++++++++++++++++++/
   void Run(string[] edbFiles)
   {
     auto thisDir = std.file.thisExePath.dirName;
     std.file.copy(thisDir ~ "/blank.fdb", thisDir ~ "/breeze.fdb");
+
+    _provider.Connect("", to!string(thisDir ~ "\\breeze.fdb"), "sysdba", "masterkey");
+  //  _trans = _provider.OpenTransaction(FdbTransaction.TAM.amWrite, FdbTransaction.TIL.ilReadCommitted, FdbTransaction.TLR.lrNoWait);
 
     _console.Init();
     _fileStorage.Init();
@@ -27,32 +40,39 @@ public:
     {
       auto edbStruct = EdbParser().Parse(file);
       auto fdbStruct = FdbConvert().Convert(edbStruct);
-      PrepareData(edbStruct);
-      RunFileJobs(edbStruct);
-      WritePacket(edbStruct);
+      PrepareData(fdbStruct);
+      RunFileJobs(fdbStruct);
+      WritePacket(fdbStruct);
       WriteFiles();
     }
   }
 
 private:
   /++++++++++++++++++++++++++++/
-  void PrepareData(EdbStructure edbStruct)
+  FdbStatement GetStatement()
+  {
+    return _provider.OpenStatement(_trans);
+  }
+  /++++++++++++++++++++++++++++/
+  void PrepareData(FdbPacket fdbPacket)
   {
   
   }
   /++++++++++++++++++++++++++++/
-  void RunFileJobs(EdbStructure edbStruct)
+  void RunFileJobs(FdbPacket fdbPacket)
   {
 
   }
   /++++++++++++++++++++++++++++/
-  void WritePacket(EdbStructure edbStruct)
+  void WritePacket(FdbPacket fdbPacket)
   {
+    //auto st = GetStatement();
+    
 
   }
   /++++++++++++++++++++++++++++/
   void WriteFiles()
   {
-
+    
   }
 }

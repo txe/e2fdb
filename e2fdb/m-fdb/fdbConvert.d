@@ -20,7 +20,10 @@ public:
       if (IdSection s = cast (IdSection) section)
       {
         packet._name = s._baseName;
-        packet._id = s._baseId;
+        packet._id   = s._baseId;
+        packet._type = s._baseType;
+        if (packet._type == "")
+          packet._type = "UNDEFINED";
         break;
       }
 
@@ -94,7 +97,7 @@ private:
   void CreateTemplate(FdbVirtData virtData, DataSectionElement elm, wstring lfrPath, wstring edbFolder)
   {
     auto temp = new FdbTemplate;
-    temp._name   = elm._name;
+    temp._name   = elm._name[0..1].toUpper ~ elm._name[1..$];
     temp._folder = elm._folder;
     foreach (col, simple; elm._simples)
       temp._sizes ~= new FdbStdSize(simple, "", "");

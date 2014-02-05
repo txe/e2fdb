@@ -6,11 +6,13 @@ class FdbPacket
 {
   wstring       _id = null;
   wstring       _name = null;
+  wstring       _type = null;
   FdbVirtData[] _fdbVirtData;
 
   int           _rId;
   int           _rRootId;
   int[wstring]  _rFolderIdMap; // все создаваемые фолдеры будут здесь прописаны, что бы уменьшить кол-во проверок
+  int           _rType;
 }
 /++++++++++++++++++++++++++++/
 class FdbVirtData
@@ -23,10 +25,11 @@ class FdbTemplate
 {
   wstring      _folder = null;
   wstring      _name = null;
-  wstring      _type = null;
   FdbStdSize[] _sizes;
   FdbModel     _model;
   FdbFrw[]     _frws;
+
+  int          _rId;
 }
 /++++++++++++++++++++++++++++/
 class FdbAttribute

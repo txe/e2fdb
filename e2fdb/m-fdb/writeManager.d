@@ -15,14 +15,12 @@ struct WriteManager
 private:
   ConsoleWriter  _console;
   FileStorage    _fileStorage;
-  FdbConnect     _provider;
+  FdbConnect     _provider = new FdbConnect;
   FdbTransaction _trans;
 
 public:
   ~this()
   {
-   // _trans.Close();
-    _provider.Disconnect();
   }
   /++++++++++++++++++++++++++++/
   void Run(string[] edbFiles)
@@ -31,7 +29,10 @@ public:
     std.file.copy(thisDir ~ "/blank.fdb", thisDir ~ "/breeze.fdb");
 
     _provider.Connect("", to!string(thisDir ~ "\\breeze.fdb"), "sysdba", "masterkey");
-  //  _trans = _provider.OpenTransaction(FdbTransaction.TAM.amWrite, FdbTransaction.TIL.ilReadCommitted, FdbTransaction.TLR.lrNoWait);
+    _trans = _provider.OpenTransaction(FdbTransaction.TAM.amWrite, FdbTransaction.TIL.ilReadCommitted, FdbTransaction.TLR.lrNoWait);
+
+    _trans.Close();
+    _provider.Disconnect();
 
     _console.Init();
     _fileStorage.Init();

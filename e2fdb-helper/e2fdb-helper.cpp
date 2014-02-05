@@ -40,6 +40,8 @@ E2FDBHELPER_API bool fdb_provider_close(int provider)
     return false;
 
   IBPP::Database base = (IBPP::IDatabase*)provider;
+  if (base->Connected())
+    base->Disconnect();
   glb_database.remove(base);
   return true;
 }
@@ -56,12 +58,17 @@ E2FDBHELPER_API int fdb_transaction_open(int provider, int am, int il, int lr)
   return (int)trans.intf();
 }
 //-------------------------------------------------------------------------
+E2FDBHELPER_API int fdb_transaction_open2(int provider)
+{
+  return fdb_transaction_open(provider, 1, 2, 1);
+}
+//-------------------------------------------------------------------------
 E2FDBHELPER_API bool fdb_transaction_close(int trans)
 {
   if (!trans)
     return false;
 
-  IBPP::Transaction _trans = (IBPP::ITransaction*)trans;
+  IBPP::Transaction _trans = ((IBPP::ITransaction*)trans);
   glb_transaction.remove(_trans);
   return true;
 }

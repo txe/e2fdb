@@ -17,6 +17,7 @@ E2FDBHELPER_API int  fdb_provider_open(const char* serverName, const char* baseN
 E2FDBHELPER_API bool fdb_provider_close(int provider);
 
 E2FDBHELPER_API int  fdb_transaction_open(int provider, int am, int il, int lr);
+E2FDBHELPER_API int  fdb_transaction_open2(int provider);
 E2FDBHELPER_API bool fdb_transaction_close(int trans);
 E2FDBHELPER_API bool fdb_transaction_start(int trans);
 E2FDBHELPER_API bool fdb_transaction_commit(int trans);

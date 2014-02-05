@@ -8,6 +8,7 @@ alias extern(Windows) int  function(const char* serverName, const char* baseName
 alias extern(Windows) bool function(int provider) fdb_provider_close_fp;
 
 alias extern(Windows) int  function(int provider, int am, int il, int lr) fdb_transaction_open_fp;
+alias extern(Windows) int  function(int prov)  fdb_transaction_open2_fp;
 alias extern(Windows) bool function(int trans) fdb_transaction_close_fp;
 alias extern(Windows) bool function(int trans) fdb_transaction_start_fp;
 alias extern(Windows) bool function(int trans) fdb_transaction_commit_fp;
@@ -33,16 +34,16 @@ alias extern(Windows) bool function(int st, int index, char* value) fdb_statemen
 
 struct fbDll
 {
-private:
+public:
   HMODULE _module;
 
-public:
   fdb_error_fp fdb_error;
 
   fdb_provider_open_fp fdb_provider_open;
   fdb_provider_close_fp fdb_provider_close;
 
-  fdb_transaction_open_fp fdb_transaction_open;
+  fdb_transaction_open_fp  fdb_transaction_open;
+  fdb_transaction_open2_fp fdb_transaction_open2;
   fdb_transaction_close_fp fdb_transaction_close;
   fdb_transaction_start_fp fdb_transaction_start;
   fdb_transaction_commit_fp fdb_transaction_commit;
@@ -68,6 +69,9 @@ public:
 
   void Load(const(char*) name)
   {
+    if (_module != null)
+      return;
+
     _module = LoadLibraryA(name);
     if (_module == null)  throw new Exception("fbDll._module == null");
 
@@ -81,6 +85,8 @@ public:
 
     fdb_transaction_open = cast(fdb_transaction_open_fp) GetProcAddress(_module, "fdb_transaction_open");
     if (fdb_transaction_open == null) throw new Exception("fdb_transaction_open == null");
+    fdb_transaction_open2 = cast(fdb_transaction_open2_fp) GetProcAddress(_module, "fdb_transaction_open2");
+    if (fdb_transaction_open2 == null) throw new Exception("fdb_transaction_open2 == null");
     fdb_transaction_close = cast(fdb_transaction_close_fp) GetProcAddress(_module, "fdb_transaction_close");
     if (fdb_transaction_close == null) throw new Exception("fdb_transaction_close == null");
     fdb_transaction_start = cast(fdb_transaction_start_fp) GetProcAddress(_module, "fdb_transaction_start");

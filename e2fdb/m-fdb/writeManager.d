@@ -9,6 +9,7 @@ private import fdb.fdbConvert;
 private import fdb.fdbStructure;
 private import fdb.fdbConnect;
 private import std.conv;
+private import std.string;
 
 class WriteManager
 {
@@ -43,7 +44,7 @@ public:
       auto fdbStruct = FdbConvert().Convert(edbStruct);
       PrepareData(fdbStruct);
       RunFileJobs(fdbStruct);
-      WritePacket(fdbStruct);
+      WritePacketNameAndFolder(fdbStruct);
       WriteFiles();
     }
   }
@@ -65,17 +66,31 @@ private:
 
   }
   /++++++++++++++++++++++++++++/
-  void WritePacket(FdbPacket fdbPacket)
+  void WritePacketNameAndFolder(FdbPacket fdbPacket)
   {
     FdbStatement st = GetStatement();
     // создать рутовый фолдер
     fdbPacket._rRootId = st.Prepare("INSERT INTO FOLDER (NAME, ID_PARENT) VALUES (?, ?) RETURNING ID").Set(1, fdbPacket._name).SetNull(2).Execute().GetInt(1);
     // создать пакет
     fdbPacket._rId = st.Prepare("INSERT INTO PACKET (PACKETID, FOLDERID) VALUES (?, ?) RETURNING ID").Set(1, fdbPacket._id).Set(2, fdbPacket._rRootId).Execute().GetInt(1);
-    // создадим карту фолдеров
-    
-
-
+    // создадим ветвление фолдеров
+    foreach (data; fdbPacket._fdbVirtData)
+      foreach (FdbTemplate temp; data._templates)
+      {
+        int prevFolderId = fdbPacket._rRootId;
+        wstring[] childFolders = temp._folder.split("|");
+        foreach (i, folder; childFolders)
+        {
+          wstring folderPath = (childFolders[0 .. i] ~ folder).join("|");
+          if (folderPath in fdbPacket._rFolderIdMap)
+          {
+            prevFolderId = fdbPacket._rFolderIdMap[folderPath];
+            continue;
+          }
+          int folderId = st.Prepare("INSERT INTO FOLDER (NAME, ID_PARENT) VALUES (?, ?) RETURNING ID").Set(1, folder).Set(2, prevFolderId).Execute().GetInt(1);
+          fdbPacket._rFolderIdMap[folderPath] = folderId;
+        }
+      }
   }
   /++++++++++++++++++++++++++++/
   void WriteFiles()

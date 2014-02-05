@@ -8,9 +8,9 @@ class FdbPacket
   wstring       _name = null;
   FdbVirtData[] _fdbVirtData;
 
-  int           _rPacketId;
+  int           _rId;
   int           _rRootId;
-  int[wstring]  _rFolderId; // все создаваемые фолдеры будут здесь прописаны, что бы уменьшить их кол-во
+  int[wstring]  _rFolderIdMap; // все создаваемые фолдеры будут здесь прописаны, что бы уменьшить кол-во проверок
 }
 /++++++++++++++++++++++++++++/
 class FdbVirtData

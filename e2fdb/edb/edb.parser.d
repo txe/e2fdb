@@ -355,7 +355,7 @@ private:
         if (pos == -1)
         {
           e._name = param.value;
-          e._folder = "";
+          e._folder = param.value;
         }
         else
         {

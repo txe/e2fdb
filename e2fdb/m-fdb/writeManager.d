@@ -10,6 +10,7 @@ private import fdb.fdbStructure;
 private import fdb.fdbConnect;
 private import std.conv;
 private import std.string;
+private import std.stdio;
 
 class WriteManager
 {
@@ -28,9 +29,14 @@ public:
   /++++++++++++++++++++++++++++/
   void Run(string[] edbFiles)
   {
+    writeln;
+    writeln;
+
+    writeln("prepare breeze.fdb ...");
     string thisDir = std.file.thisExePath.dirName;
     std.file.copy(thisDir ~ "/blank.fdb", thisDir ~ "/breeze.fdb");
 
+    writeln("connect to breeze.fdb ...");
     _provider.Connect(thisDir ~ "\\breeze.fdb", "sysdba", "masterkey");
     _trans = _provider.OpenTransaction(FdbTransaction.TAM.amWrite, FdbTransaction.TIL.ilReadCommitted, FdbTransaction.TLR.lrNoWait);
     _trans.Start;
@@ -38,8 +44,12 @@ public:
     _console.Init();
     _fileStorage.Init();
 
+    writeln;
     foreach (index, file; edbFiles)
     {
+      write("\rwrite: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): 0");
+      stdout.flush();
+
       auto edbStruct = EdbParser().Parse(file);
       auto fdbStruct = FdbConvert().Convert(edbStruct);
       PrepareData(fdbStruct);

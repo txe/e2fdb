@@ -67,7 +67,7 @@ int main(string[] argv)
     SetConsoleOutputCP(65001);
     const path = "d:\\edb";
 
-    writeln("Collecting files before ...");
+    writeln("collecting files before ...");
     string[] edbFiles = get_files(path, "*.edb");
 
     auto writer = new WriteManager;

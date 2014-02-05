@@ -7,6 +7,7 @@ import std.parallelism;
 import edb.parser;
 import helper.fb;
 import fdb.writeManager;
+import fdb.fdbConvert;
 
 extern(Windows) int SetConsoleOutputCP(uint);
 
@@ -33,7 +34,8 @@ bool TestBase(string[] edbFiles)
       write("\rtest: " ~ to!string(count) ~ " of " ~ to!string(edbFiles.length) ~ " file(s), problem(s): " ~ to!string(problems.length));
       stdout.flush();
 
-      EdbParser().Parse(edbFile);
+      auto edbStruct = EdbParser().Parse(edbFile);
+      auto fdbStruct = FdbConvert().Convert(edbStruct);
     }
     catch (EdbParserException e)
     { 
@@ -51,7 +53,7 @@ bool TestBase(string[] edbFiles)
   if (problems)
     foreach (problem; problems)
       writeln(problem);
-  return !!problems.length;
+  return problems.length == 0;
 }
 /++++++++++++++++++++++++++++/
 int main(string[] argv)
@@ -59,17 +61,23 @@ int main(string[] argv)
   // для генерации кода оберток
   // utils.h2d("c:\\e2fdb-helper.h", "c:\\txt.d", "fdb_", "dbDll");
   // return 0;
-
   //auto dll = new helper.fb.fbDll("e2fdb-helper.dll");
 
-  SetConsoleOutputCP(65001);
-  const path = "d:\\edb";
+  try
+  {
+    SetConsoleOutputCP(65001);
+    const path = "d:\\edb";
 
-  writeln("Collecting files before ...");
-  string[] edbFiles = get_files(path, "*.edb");
+    writeln("Collecting files before ...");
+    string[] edbFiles = get_files(path, "*.edb");
 
-  if (TestBase(edbFiles))
-    WriteManager().Run(edbFiles);
+    if (TestBase(edbFiles))
+      WriteManager().Run(edbFiles);
+  }
+  catch (Exception e)
+  {
+     writeln(e.msg);
+  }
 
   write("\npress enter to exit:");
   readln();

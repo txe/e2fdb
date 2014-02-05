@@ -1,26 +1,28 @@
 module fdb.fdbStructure;
+private import edb.structure;
 
 /++++++++++++++++++++++++++++/
 class FdbPacket
 {
-  wstring     _id;
-  wstring     _name;
-  FdbVirtData _fdbVirtData;    
+  wstring       _id = null;
+  wstring       _name = null;
+  FdbVirtData[] _fdbVirtData;    
 }
 /++++++++++++++++++++++++++++/
 class FdbVirtData
 {
-  FdbAttribute[]         _atrs;
-  FdbTemplate[][wstring] _folders;  // folderPath -> FdbTemplates
+  FdbAttribute[] _atrs;
+  FdbTemplate[]  _templates;
 }
 /++++++++++++++++++++++++++++/
 class FdbTemplate
 {
-  wstring         _name;
-  wstring         _type;
-  FdbStdSize[]   _sizes;
-  FdbModel       _model;
-  FdbFrw[]       _frws;
+  wstring      _folder = null;
+  wstring      _name = null;
+  wstring      _type = null;
+  FdbStdSize[] _sizes;
+  FdbModel     _model;
+  FdbFrw[]     _frws;
 }
 /++++++++++++++++++++++++++++/
 class FdbAttribute
@@ -30,19 +32,26 @@ class FdbAttribute
   int     _num;
   int     _oldNum;
   Type    _type;
-  wstring _name;
-  wstring _desc;
-  wstring _measure;
-  wstring _variable;
-  wstring _formula;
-  wstring _value;
+  wstring _name = null;
+  wstring _desc = null;
+  wstring _measure = null;
+  wstring _variable = null;
+  wstring _formula = null;
+  SimpleValue _value;
 }
 /++++++++++++++++++++++++++++/
 class FdbStdSize
 {
-  wstring[] _values;
-  wstring   _pdf;
-  wstring   _jpg;
+  SimpleValue[] _values;
+  wstring       _pdf;
+  wstring       _jpg;
+
+  this(SimpleValue[] values, wstring pdf, wstring jpg)
+  {
+    _values = values;
+    _pdf = pdf;
+    _jpg = jpg;
+  }
 }
 /++++++++++++++++++++++++++++/
 class FdbModel

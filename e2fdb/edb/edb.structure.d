@@ -32,11 +32,11 @@ class DataSectionElement
     }
   
     int     _typeNum; 
-    wstring _name; 
-    wstring _path; 
+    wstring _name = null; 
+    wstring _path = null; 
   }
 
-  wstring _name;
+  wstring _name = null;
   wstring _folder = null;
   Prj[]   _prjs;
   SimpleValue[][int] _simples;
@@ -44,8 +44,8 @@ class DataSectionElement
 /++++++++++++++++++++++++++++/
 class AtrInComment
 {
-  wstring name;
-  wstring desc;
+  wstring name    = null;
+  wstring desc    = null;
   wstring formula;
 }
 /++++++++++++++++++++++++++++/
@@ -63,7 +63,7 @@ class DataSection : EdbSection
   wstring _paramComment2;
 
   wstring              _typeList;
-  AtrInComment[int]   _atrs;
+  AtrInComment[int]    _atrs;
   DataSectionElement[] _elements;
 
   DataSectionElement AddElement()
@@ -102,6 +102,7 @@ class AliasSection :EdbSection
 /++++++++++++++++++++++++++++/
 struct EdbStructure
 {
+  wstring      _path;
   EdbSection[] _sections;
 }
 /++++++++++++++++++++++++++++/

@@ -11,6 +11,7 @@ private import std.array;
 private import edb.structure;
 private import edb.formula;
 private import utils;
+private import std.path;
 
 /++++++++++++++++++++++++++++/
 private alias Tuple!(wstring, "key", wstring, "value") KeyValue;
@@ -120,6 +121,16 @@ public:
       }
     }
 
+    // зададим дополнительные данные
+    foreach (s; _sections)
+      if (auto idSection = cast(IdSection) s)
+      {
+        if (idSection._baseName.length == 0)
+          idSection._baseName = to!wstring(edbPath.stripExtension.baseName);
+        if (idSection._baseId.length == 0)
+          idSection._baseId = idSection._baseName;
+      }
+
     // делаем дополнительные проверки
     try
     {
@@ -136,6 +147,7 @@ public:
 
 
     auto edbFile = EdbStructure();
+    edbFile._path = to!wstring(edbPath);
     edbFile._sections = _sections;
     return edbFile;
   }

@@ -31,13 +31,14 @@ class FdbConnect
   FdbTransaction OpenTransaction(FdbTransaction.TAM am, FdbTransaction.TIL il, FdbTransaction.TLR lr)
   {
     int tran = _dll.fdb_transaction_open(_provider, am, il, lr);
-    return new FdbTransaction(this, tran);
+    auto f = new FdbTransaction(this, tran);
+    return f;
   }
 
   FdbStatement OpenStatement(FdbTransaction transaction)
   {
     int st = _dll.fdb_statement_open(_provider, transaction._tran);
-    return new FdbStatement(this, st);
+    return FdbStatement(this, st);
   }
 }
 
@@ -62,7 +63,7 @@ class FdbTransaction
   bool Rollback() { return _connect._dll.fdb_transaction_rollback(_tran); }
 }
 
-class FdbStatement
+struct FdbStatement
 {
   private FdbConnect _connect;
   private int _st;

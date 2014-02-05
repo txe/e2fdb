@@ -70,8 +70,9 @@ int main(string[] argv)
     writeln("Collecting files before ...");
     string[] edbFiles = get_files(path, "*.edb");
 
+    auto writer = new WriteManager;
     if (TestBase(edbFiles))
-      WriteManager().Run(edbFiles);
+     writer.Run(edbFiles);
   }
   catch (Exception e)
   {

@@ -193,6 +193,15 @@ E2FDBHELPER_API bool fdb_statement_set_string(int st, int index, const char* val
   return true;
 }
 //-------------------------------------------------------------------------
+E2FDBHELPER_API bool fdb_statement_set_blob_as_string(int st, int index, const char* value)
+{
+  if (!st)
+    return false;
+
+  ((IBPP::IStatement*)st)->Set(index, std::string(value));
+  return true;
+}
+//-------------------------------------------------------------------------
 E2FDBHELPER_API bool fdb_statement_get_is_null(int st, int index)
 {
   if (!st)

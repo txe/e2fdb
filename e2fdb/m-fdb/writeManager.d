@@ -11,6 +11,7 @@ private import fdb.fdbConnect;
 private import std.conv;
 private import std.string;
 private import std.stdio;
+private import std.datetime;
 
 class WriteManager
 {
@@ -21,6 +22,7 @@ private:
   FdbTransaction _trans;
 
   int[wstring]    _cache_packet_types;
+  int             _repId;
 
 public:
   ~this()
@@ -32,34 +34,54 @@ public:
   void Run(string[] edbFiles)
   {
     writeln;
-    writeln;
 
-    writeln("prepare breeze.fdb ...");
+    write("\nprepare fdb ... ");
     string thisDir = std.file.thisExePath.dirName;
     std.file.copy(thisDir ~ "/blank.fdb", thisDir ~ "/breeze.fdb");
+    write("ok");
 
-    writeln("connect to breeze.fdb ...");
-    _provider.Connect(thisDir ~ "\\breeze.fdb", "sysdba", "masterkey");
+    write("\nconnect to fdb ... ");
+    if (!_provider.Connect(thisDir ~ "\\breeze.fdb", "sysdba", "masterkey"))
+    {
+      write("error, can't create connect");
+      return;
+    }
     _trans = _provider.OpenTransaction(FdbTransaction.TAM.amWrite, FdbTransaction.TIL.ilReadCommitted, FdbTransaction.TLR.lrNoWait);
+    if (_trans is null)
+    {
+      write("error, can't open transaction");
+      return;
+    }
+    write("ok");
     _trans.Start;
     
     _console.Init();
     _fileStorage.Init();
 
+    StopWatch sw;
+    sw.start;
     writeln;
     foreach (index, file; edbFiles)
     {
       write("\rwrite: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): 0");
       stdout.flush();
-
-      auto edbStruct = EdbParser().Parse(file);
-      auto fdbStruct = FdbConvert().Convert(edbStruct);
-      PrepareData(fdbStruct);
-      RunFileJobs(fdbStruct);
-      WritePacketAndFolderTree(fdbStruct);
-      WriteTempletes(fdbStruct);
-      WriteFiles();
+      
+      try
+      {
+        auto edbStruct = EdbParser().Parse(file);
+        auto fdbStruct = FdbConvert().Convert(edbStruct);
+        PrepareData(fdbStruct);
+        RunFileJobs(fdbStruct);
+        WritePacketAndFolderTree(fdbStruct);
+        WriteTempletes(fdbStruct);
+        WriteFiles();
+      }
+      catch (Exception e) {}
     }
+    sw.stop;
+    writeln;
+    writeln("lap time: ", sw.peek.seconds, " sec.");
+
   }
 
 private:
@@ -80,6 +102,8 @@ private:
       fdbPacket._rType = st.Prepare("INSERT INTO OBJECTTYPE (SVAL) VALUES ( ? ) RETURNING ID").Set(1, fdbPacket._type).Execute().GetInt(1);
       _cache_packet_types[fdbPacket._type] = fdbPacket._rType;
     }
+
+    _repId = st.Prepare("INSERT INTO REPRESENTATION (DATA, DIGEST) VALUES( ?, ? ) RETURNING ID").SetBlob(1, "20").Set(2, "20").Execute().GetInt(1);
   }
   /++++++++++++++++++++++++++++/
   void RunFileJobs(FdbPacket fdbPacket)
@@ -122,7 +146,7 @@ private:
       {
         int folderId = fdbPacket._rFolderIdMap[temp._folder];
         st.Prepare("INSERT INTO OBJECT (NAME, MODELID, OBJECTTYPEID, PACKETID, FOLDERID, REPRESENTATIONID) VALUES ( ?, ?, ?, ?, ?, ? ) RETURNING ID");
-        st.Set(1, temp._name).SetNull(2).Set(3, fdbPacket._rType).Set(4, fdbPacket._rId).Set(5, folderId).SetNull(6);
+        st.Set(1, temp._name).SetNull(2).Set(3, fdbPacket._rType).Set(4, fdbPacket._rId).Set(5, folderId).Set(6, _repId);
         temp._rId = st.Execute().GetInt(1);
       }
   }

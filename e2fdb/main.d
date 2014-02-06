@@ -72,14 +72,16 @@ int main(string[] argv)
 
     auto writer = new WriteManager;
     if (TestBase(edbFiles))
-     writer.Run(edbFiles);
+    {
+    }
+    writer.Run(edbFiles);
   }
   catch (Exception e)
   {
      writeln(e.msg);
   }
 
-  write("\npress enter to exit:");
+  write("\npress enter to exit ->");
   readln();
   return 0;
 }

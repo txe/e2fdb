@@ -361,6 +361,8 @@ private:
         {
           e._name = param.value[pos + 1 .. $];
           e._folder = param.value[0 .. pos];
+          if (e._name is null || e._name.strip == "")
+            throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": в FOLDER есть лишняя |");
         }
         break;
       case "PROJECTION":

@@ -31,8 +31,9 @@ class FdbConnect
   FdbTransaction OpenTransaction(FdbTransaction.TAM am, FdbTransaction.TIL il, FdbTransaction.TLR lr)
   {
     int tran = _dll.fdb_transaction_open(_provider, am, il, lr);
-    auto f = new FdbTransaction(this, tran);
-    return f;
+    if (tran == 0)
+      return null;
+    return new FdbTransaction(this, tran);
   }
 
   FdbStatementRef OpenStatement(FdbTransaction transaction)
@@ -131,6 +132,11 @@ struct FdbStatement
   ref FdbStatement Set(int index, wstring val)
   {
     _connect._dll.fdb_statement_set_string(_st, index, to!string(val).toStringz);
+    return this;
+  }
+  ref FdbStatement SetBlob(int index, string val)
+  {
+    _connect._dll.fdb_statement_set_blob_as_string(_st, index, val.toStringz);
     return this;
   }
 

@@ -30,6 +30,7 @@ class FdbTemplate
   FdbFrw[]     _frws;
 
   int          _rId;
+  int[]        _rAtrId;
 }
 /++++++++++++++++++++++++++++/
 class FdbAttribute
@@ -37,7 +38,7 @@ class FdbAttribute
   enum Type {Int = 1, Double = 2, String = 3}
 
   int     _num;
-  int     _oldNum;
+  int     _oldNum = 0;
   Type    _type;
   wstring _name = null;
   wstring _desc = null;
@@ -45,6 +46,9 @@ class FdbAttribute
   wstring _variable = null;
   wstring _formula = null;
   SimpleValue _value;
+
+  int _rNameId;
+  int _rDescId;
 }
 /++++++++++++++++++++++++++++/
 class FdbStdSize

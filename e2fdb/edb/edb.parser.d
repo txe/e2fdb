@@ -273,7 +273,7 @@ private:
     int num = to!int(words[0]);
    
     // возьмем данные послед черты
-    line = line[line.indexOf("-") .. $];
+    line = line[line.indexOf("-") + 1 .. $];
     words = line.split("|");
 
     auto atr = new AtrInComment();

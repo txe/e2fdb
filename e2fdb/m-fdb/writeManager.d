@@ -21,8 +21,10 @@ private:
   FdbConnect     _provider = new FdbConnect;
   FdbTransaction _trans;
 
-  int[wstring]    _cache_packet_types;
-  int             _repId;
+  int[wstring] _cache_packet_types;
+  int[wstring] _cache_atr_name;
+  int[wstring] _cache_atr_desc;
+  int          _repId;
 
 public:
   ~this()
@@ -61,9 +63,10 @@ public:
     StopWatch sw;
     sw.start;
     writeln;
+    int problems = 0;
     foreach (index, file; edbFiles)
     {
-      write("\rwrite: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): 0");
+      write("\rwrite: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): ", problems);
       stdout.flush();
       
       try
@@ -76,7 +79,10 @@ public:
         WriteTempletes(fdbStruct);
         WriteFiles();
       }
-      catch (Exception e) {}
+      catch (Exception e) 
+      {
+        ++problems;
+      }
     }
     sw.stop;
     writeln;
@@ -95,15 +101,35 @@ private:
   {
     FdbStatement st = GetStatement();
     // подготовим кэш для типов пакетов
-    if (fdbPacket._type in _cache_packet_types)
-      fdbPacket._rType = _cache_packet_types[fdbPacket._type];
+    if (int* val = fdbPacket._type in _cache_packet_types)
+      fdbPacket._rType = *val;
     else
     {
       fdbPacket._rType = st.Prepare("INSERT INTO OBJECTTYPE (SVAL) VALUES ( ? ) RETURNING ID").Set(1, fdbPacket._type).Execute().GetInt(1);
       _cache_packet_types[fdbPacket._type] = fdbPacket._rType;
     }
-
+    // ненастоящий репрезинтейшн
     _repId = st.Prepare("INSERT INTO REPRESENTATION (DATA, DIGEST) VALUES( ?, ? ) RETURNING ID").SetBlob(1, "20").Set(2, "20").Execute().GetInt(1);
+    // заполним id для имен атрибутов
+    foreach (data; fdbPacket._fdbVirtData)
+      foreach (atr; data._atrs)
+      {
+        if (int* val = atr._name in _cache_atr_name)
+          atr._rNameId = *val;
+        else
+        {
+          atr._rNameId = st.Prepare("INSERT INTO ATTRIBUTENAME (NAME) VALUES( ? ) RETURNING ID").Set(1, atr._name).Execute().GetInt(1);
+         _cache_atr_name[atr._name] = atr._rNameId;
+        }
+        if (int* val = atr._desc in _cache_atr_desc)
+          atr._rDescId = *val;
+        else
+        {
+          atr._rDescId = st.Prepare("INSERT INTO ATTRIBUTEDESCRIPTION (DESCRIPTION) VALUES( ? ) RETURNING ID").Set(1, atr._desc).Execute().GetInt(1);
+          _cache_atr_desc[atr._desc] = atr._rDescId;
+        }
+      }
+
   }
   /++++++++++++++++++++++++++++/
   void RunFileJobs(FdbPacket fdbPacket)
@@ -144,10 +170,24 @@ private:
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
       {
+        // создадим темплейт
         int folderId = fdbPacket._rFolderIdMap[temp._folder];
         st.Prepare("INSERT INTO OBJECT (NAME, MODELID, OBJECTTYPEID, PACKETID, FOLDERID, REPRESENTATIONID) VALUES ( ?, ?, ?, ?, ?, ? ) RETURNING ID");
         st.Set(1, temp._name).SetNull(2).Set(3, fdbPacket._rType).Set(4, fdbPacket._rId).Set(5, folderId).Set(6, _repId);
         temp._rId = st.Execute().GetInt(1);
+
+        // создадим атрибуты для темплейта
+        foreach (atr; data._atrs)
+        {
+          //st.Prepare("EXECUTE PROCEDURE CREATE_OBJ_ATTR(?,?,?,?,?,?,?,?,?,?,?,?)");
+          //st.Set(1, temp._rId).Set(2, atr._num).Set(3, atr._oldNum).Set(4, atr._type).Set(5, atr._name).Set(6, atr._desc);
+          //st.Set(7, "" /+measure+/).Set(8, ""/+var+/).Set(9, "" /+formula+/).SetNull(10).SetNull(11).SetNull(12);
+          st.Prepare("INSERT INTO OBJECTATTRIBUTE (OBJECTID, NUMBER, OLD_NUMBER, ATTRTYPE, ATTRIBUTENAMEID, ATTRIBUTEDESCRIPTIONID, MEASURE, VARNAME, FORMULA, CONCRETEVALUEID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING ID");
+          st.Set(1, temp._rId).Set(2, atr._num).Set(3, atr._oldNum).Set(4, atr._type).Set(5, atr._rNameId).Set(6, atr._rDescId);
+          st.Set(7, "" /+measure+/).Set(8, ""/+var+/).Set(9, "" /+formula+/).SetNull(10);
+          int i = st.Execute().GetInt(1);
+          temp._rAtrId ~= i;
+        }
       }
   }
   /++++++++++++++++++++++++++++/

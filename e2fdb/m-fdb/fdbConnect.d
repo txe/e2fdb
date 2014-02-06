@@ -91,12 +91,14 @@ struct FdbStatement
 
   ref FdbStatement Prepare(string query)
   { 
-    _connect._dll.fdb_statement_prepare(_st, query.toStringz);
+    if (!_connect._dll.fdb_statement_prepare(_st, query.toStringz))
+      throw new Exception("failed fdb_statement_prepare");
     return this;
   }
   ref FdbStatement Execute(string query = "")
   {
-    _connect._dll.fdb_statement_execute(_st, query.toStringz);
+    if (!_connect._dll.fdb_statement_execute(_st, query.toStringz))
+      throw new Exception("failed fdb_statement_prepare");
     return this;
   }
   ref FdbStatement ExecuteImmediate(string query)

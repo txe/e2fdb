@@ -81,7 +81,7 @@ int main(string[] argv)
      writeln(e.msg);
   }
 
-  write("\npress enter to exit ->");
+  write("\npress enter to exit");
   readln();
   return 0;
 }

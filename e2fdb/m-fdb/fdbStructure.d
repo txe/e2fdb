@@ -54,12 +54,18 @@ class FdbAttribute
 class FdbStdSize
 {
   SimpleValue[] _values;
+  wstring       _id;
+  wstring       _oldIndex;
+  wstring       _oldName;
   wstring       _pdf;
   wstring       _jpg;
 
-  this(SimpleValue[] values, wstring pdf, wstring jpg)
+  this(SimpleValue[] values, wstring id, wstring oldIndex, wstring oldName, wstring pdf, wstring jpg)
   {
     _values = values;
+    _id = id;
+    _oldIndex = oldIndex;
+    _oldName = oldName;
     _pdf = pdf;
     _jpg = jpg;
   }

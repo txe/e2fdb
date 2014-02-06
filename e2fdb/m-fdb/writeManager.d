@@ -29,6 +29,7 @@ private:
 public:
   ~this()
   {
+    _trans.Commit();
     _trans.Close();
     _provider.Disconnect();
   }
@@ -139,11 +140,15 @@ private:
   /++++++++++++++++++++++++++++/
   void WritePacketAndFolderTree(FdbPacket fdbPacket)
   {
-    FdbStatement st = GetStatement();
+    FdbStatement stPacket = GetStatement();
+    stPacket.Prepare("INSERT INTO PACKET (PACKETID, FOLDERID) VALUES (?, ?) RETURNING ID");
+    FdbStatement stFolder = GetStatement();
+    stFolder.Prepare("INSERT INTO FOLDER (NAME, ID_PARENT) VALUES (?, ?) RETURNING ID");
+
     // создать рутовый фолдер
-    fdbPacket._rRootId = st.Prepare("INSERT INTO FOLDER (NAME, ID_PARENT) VALUES (?, ?) RETURNING ID").Set(1, fdbPacket._name).SetNull(2).Execute().GetInt(1);
+    fdbPacket._rRootId = stFolder.Set(1, fdbPacket._name).SetNull(2).Execute().GetInt(1);
     // создать пакет
-    fdbPacket._rId = st.Prepare("INSERT INTO PACKET (PACKETID, FOLDERID) VALUES (?, ?) RETURNING ID").Set(1, fdbPacket._id).Set(2, fdbPacket._rRootId).Execute().GetInt(1);
+    fdbPacket._rId = stPacket.Set(1, fdbPacket._id).Set(2, fdbPacket._rRootId).Execute().GetInt(1);
     // создадим ветвление фолдеров
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
@@ -158,7 +163,7 @@ private:
             prevFolderId = fdbPacket._rFolderIdMap[folderPath];
             continue;
           }
-          int folderId = st.Prepare("INSERT INTO FOLDER (NAME, ID_PARENT) VALUES (?, ?) RETURNING ID").Set(1, folder).Set(2, prevFolderId).Execute().GetInt(1);
+          int folderId = stFolder.Set(1, folder).Set(2, prevFolderId).Execute().GetInt(1);
           fdbPacket._rFolderIdMap[folderPath] = folderId;
         }
       }
@@ -170,11 +175,12 @@ private:
     stTemp.Prepare("INSERT INTO OBJECT (NAME, MODELID, OBJECTTYPEID, PACKETID, FOLDERID, REPRESENTATIONID) VALUES ( ?, ?, ?, ?, ?, ? ) RETURNING ID");
     FdbStatement stAtr = GetStatement();
     stAtr.Prepare("INSERT INTO OBJECTATTRIBUTE (OBJECTID, NUMBER, OLD_NUMBER, ATTRTYPE, ATTRIBUTENAMEID, ATTRIBUTEDESCRIPTIONID, MEASURE, VARNAME, FORMULA, CONCRETEVALUEID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING ID");
+    FdbStatement stSize = GetStatement();
+    stSize.Prepare("INSERT INTO STANDARDSIZE (OBJECTID, IDENTIFIER, OLD_INDEX, OLD_NAME) VALUES (?, ?, ?, ?) RETURNING ID");
 
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
       {
-
         // создадим темплейт
         int folderId = fdbPacket._rFolderIdMap[temp._folder];
         stTemp.Set(1, temp._name).SetNull(2).Set(3, fdbPacket._rType).Set(4, fdbPacket._rId).Set(5, folderId).Set(6, _repId);
@@ -187,6 +193,12 @@ private:
           stAtr.Set(7, "" /+measure+/).Set(8, ""/+var+/).Set(9, "" /+formula+/).SetNull(10);
           int i = stAtr.Execute().GetInt(1);
           temp._rAtrId ~= i;
+        }
+
+        // создадим типоразмеры
+        foreach (stdSize; temp._sizes)
+        {
+          int i = stSize.Set(1, temp._rId).Set(2, stdSize._id).Set(3, stdSize._oldIndex).Set(4, stdSize._oldName).Execute().GetInt(1);
         }
       }
   }

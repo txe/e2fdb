@@ -39,7 +39,7 @@ class DataSectionElement
   wstring _name = null;
   wstring _folder = null;
   Prj[]   _prjs;
-  SimpleValue[][int] _simples;
+  SimpleValue[][int] _simples; // список типоразмеров с номер строки где они распологаются
 }
 /++++++++++++++++++++++++++++/
 class AtrInComment

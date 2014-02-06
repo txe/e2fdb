@@ -99,8 +99,23 @@ private:
     auto temp = new FdbTemplate;
     temp._name   = elm._name[0..1].toUpper ~ elm._name[1..$];
     temp._folder = elm._folder;
-    foreach (col, simple; elm._simples)
-      temp._sizes ~= new FdbStdSize(simple, "", "");
+    foreach (row, simple; elm._simples)
+    {
+      // if (IsEngSys) id = simple(11);
+      wstring id = simple[0]._value;
+      wstring oldIndex = "";
+      wstring oldName = "";
+      wstring[] words = id.split("#");
+      if (words.length > 1)
+      {
+        if (words.length != 3) // если и разделится, то только на три части
+          throw new Exception("fdbConvert: ошибка определения id типоразмера");
+        id = words[0];
+        oldIndex = words[1];
+        oldName = words[2];
+      }
+      temp._sizes ~= new FdbStdSize(simple, id, oldIndex, oldName, "", ""); // не забыть проверить что бы все 3d было у всех одинаковым ))
+    }
 
     virtData._templates ~= temp;
   }

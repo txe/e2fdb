@@ -57,6 +57,9 @@
     <ClInclude Include="ibpp\ibpp.h">
       <Filter>ibpp</Filter>
     </ClInclude>
+    <ClInclude Include="ByteData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -124,6 +127,9 @@
     </ClCompile>
     <ClCompile Include="ibpp\user.cpp">
       <Filter>ibpp</Filter>
+    </ClCompile>
+    <ClCompile Include="ByteData.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

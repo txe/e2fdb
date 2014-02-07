@@ -258,6 +258,9 @@ private:
   /+--------------------------+/
   void ParseDataSectionComment(DataSection section, wstring line)
   {
+    if (line.indexOf("|") == -1)
+      return;
+
     wstring[] words = line.split(" ");
     if (words.length < 3)
       return;
@@ -277,27 +280,30 @@ private:
     words = line.split("|");
 
     auto atr = new AtrInComment();
-    if (words.length > 0) atr.name = words[0].strip;
-    if (words.length > 1) atr.desc = words[1].strip;
+    if (words.length > 0) atr.desc = words[0].strip; // все верно - сперва описание потом имя
+    if (words.length > 1) atr.name = words[1].strip;
     if (words.length > 2) atr.formula = words[2].strip;
-    if (atr.name.length == 0)
-      atr.name = "Безымянный атрибут";
 
-    if (words.length == 0)
+    if (atr.name.length == 0)
+      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": старый формат атрибутов, т.к. не содержет имени атрибута");
+    if (words.length < 2)
       throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": старый формат атрибутов, т.к. не содежит |");
     if (atr.name.length > 127)
       throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": длина названия атрибута не должна превышать 127 символов");
     if (atr.desc.length > 127)
       throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": длина описания атрибута не должна превышать 127 символов");
 
-    // проверка на повторяемость
+    // проверка на повторяемость номера
     if (section._atrs.length == 0)
       if (num != 0)
         throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": номер первого атрибута в комментариях должно начинатся с нуля");
-
     if (num > 0)
       if (!((num - 1) in section._atrs))
         throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": номер атрибута в комментариях должно должно быть больше на 1, чем предыдущий атрибут");
+    // проверка на повторяемость названия атрибута
+    foreach (col, a; section._atrs)
+      if (a.name == atr.name)
+        throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": имя атрибута в комментариях повторяетя, имя: " ~ atr.name ~", atr_1: " ~ to!wstring(col) ~ ", atr_2: " ~ to!wstring(num));
 
     section._atrs[num] = atr;
   }

@@ -53,6 +53,10 @@ bool TestBase(string[] edbFiles)
   if (problems)
     foreach (problem; problems)
       writeln(problem);
+
+  auto f = File(std.file.thisExePath.dirName ~ "\\+log.txt", "w");
+  f.write(problems.join("\n"));
+
   return problems.length == 0;
 }
 /++++++++++++++++++++++++++++/
@@ -65,7 +69,7 @@ int main(string[] argv)
   try
   {
     SetConsoleOutputCP(65001);
-    const path = "d:\\edb";
+    const path = "d:\\+edb";
 
     writeln("collecting files before ...");
     string[] edbFiles = get_files(path, "*.edb");
@@ -75,6 +79,7 @@ int main(string[] argv)
     {
     }
     writer.Run(edbFiles);
+    
   }
   catch (Exception e)
   {

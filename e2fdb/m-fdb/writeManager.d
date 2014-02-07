@@ -64,10 +64,10 @@ public:
     StopWatch sw;
     sw.start;
     writeln;
-    int problems = 0;
+    string[] problems;
     foreach (index, file; edbFiles)
     {
-      write("\rwrite: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): ", problems);
+      write("\rwrite: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): ", problems.length);
       stdout.flush();
       
       try
@@ -82,12 +82,15 @@ public:
       }
       catch (Exception e) 
       {
-        ++problems;
+        problems ~= "! " ~ e.msg ~ "\n  file: " ~ file;
       }
     }
     sw.stop;
     writeln;
     writeln("lap time: ", sw.peek.seconds, " sec.");
+
+    foreach (p; problems)
+      writeln(p);
 
   }
 
@@ -177,7 +180,8 @@ private:
     stAtr.Prepare("INSERT INTO OBJECTATTRIBUTE (OBJECTID, NUMBER, OLD_NUMBER, ATTRTYPE, ATTRIBUTENAMEID, ATTRIBUTEDESCRIPTIONID, MEASURE, VARNAME, FORMULA, CONCRETEVALUEID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING ID");
     FdbStatement stSize = GetStatement();
     stSize.Prepare("INSERT INTO STANDARDSIZE (OBJECTID, IDENTIFIER, OLD_INDEX, OLD_NAME) VALUES (?, ?, ?, ?) RETURNING ID");
-
+    FdbStatement stVal = GetStatement();
+    stVal.Prepare("EXECUTE PROCEDURE WRITE_STD_SIZE_VAL(?,?,?,?,?)");
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
       {
@@ -191,14 +195,25 @@ private:
         {
           stAtr.Set(1, temp._rId).Set(2, atr._num).Set(3, atr._oldNum).Set(4, atr._type).Set(5, atr._rNameId).Set(6, atr._rDescId);
           stAtr.Set(7, "" /+measure+/).Set(8, ""/+var+/).Set(9, "" /+formula+/).SetNull(10);
-          int i = stAtr.Execute().GetInt(1);
-          temp._rAtrId ~= i;
+          int atrId = stAtr.Execute().GetInt(1);
+          temp._rAtrId ~= atrId;
         }
 
         // создадим типоразмеры
         foreach (stdSize; temp._sizes)
         {
-          int i = stSize.Set(1, temp._rId).Set(2, stdSize._id).Set(3, stdSize._oldIndex).Set(4, stdSize._oldName).Execute().GetInt(1);
+          int stdSizeId = stSize.Set(1, temp._rId).Set(2, stdSize._id).Set(3, stdSize._oldIndex).Set(4, stdSize._oldName).Execute().GetInt(1);
+          foreach (col, val; stdSize._values)
+          {
+            if (val._type == SimpleValue.ValueType.Null)
+              continue;
+            stVal.Set(1, temp._rAtrId[col]);
+            stVal.Set(2, stdSizeId);
+            val._type == SimpleValue.ValueType.Int ? stVal.Set(3, to!int(val._value)) : stVal.SetNull(3);
+            val._type == SimpleValue.ValueType.Double ? stVal.Set(4, to!double(val._value)) : stVal.SetNull(4);
+            val._type == SimpleValue.ValueType.String ? stVal.Set(5, val._value) : stVal.SetNull(5);
+            stVal.Execute();
+          }
         }
       }
   }

@@ -98,7 +98,7 @@ struct FdbStatement
   ref FdbStatement Execute(string query = "")
   {
     if (!_connect._dll.fdb_statement_execute(_st, query.toStringz))
-      throw new Exception("failed fdb_statement_prepare");
+      throw new Exception("failed fdb_statement_execute");
     return this;
   }
   ref FdbStatement ExecuteImmediate(string query)
@@ -121,7 +121,7 @@ struct FdbStatement
     _connect._dll.fdb_statement_set_int(_st, index, val);
     return this;
   }
-  ref FdbStatement Set(int index, ref double val)
+  ref FdbStatement Set(int index, double val)
   { 
     _connect._dll.fdb_statement_set_double(_st, index, &val);
     return this;

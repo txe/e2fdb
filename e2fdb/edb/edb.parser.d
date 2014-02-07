@@ -791,10 +791,11 @@ private:
     }
 
     if (val == "" || val == "\" \"" || val == "\"-\"")
-      return SimpleValue(val, SimpleValue.ValueType.Null);
+      return SimpleValue("", SimpleValue.ValueType.Null);
     if (val.startsWith("\""))
     {
-      if (val[1 .. $-1].strip == "")
+      val = val[1 .. $-1].strip;
+      if (val == "")
         return SimpleValue("", SimpleValue.ValueType.Null);
       else
         return SimpleValue(val, SimpleValue.ValueType.String);
@@ -802,7 +803,7 @@ private:
     if (IsInt(val))
       return SimpleValue(val, SimpleValue.ValueType.Int);
     if (IsDoubleEx(val))
-      return SimpleValue(val, SimpleValue.ValueType.Double);
+      return SimpleValue(val.replace(",", "."), SimpleValue.ValueType.Double);
     if (IsDoubleEx(val))
       return SimpleValue(val, SimpleValue.ValueType.Double);
     throw new EdbParserException("Str2SimpleValue: непонятный тип для: " ~ val);

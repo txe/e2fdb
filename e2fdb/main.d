@@ -70,7 +70,7 @@ int main(string[] argv)
   try
   {
     SetConsoleOutputCP(65001);
-    const path = "d:\\edb2";
+    const path = "d:\\+edb";
 
     writeln("collecting files before ...");
     string[] edbFiles = get_files(path, "*.edb");

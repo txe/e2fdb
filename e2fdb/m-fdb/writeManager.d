@@ -55,8 +55,8 @@ public:
       write("error, can't open transaction");
       return;
     }
-    write("ok");
     _trans.Start;
+    write("ok");
     
     _console.Init();
     _fileStorage.Init();
@@ -92,6 +92,8 @@ public:
       writeln(p);
 
     writeln("lap time: ", sw.peek.seconds, " sec.");
+
+    _trans.Commit();
   }
 
 private:

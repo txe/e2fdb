@@ -2,7 +2,8 @@ module fdb.fdbConnect;
 private import helper.fb;
 private import std.conv;
 private import std.string;
-import std.c.windows.windows;
+private import std.c.windows.windows;
+private import utils;
 
 
 class FdbConnect
@@ -133,7 +134,8 @@ struct FdbStatement
   }
   ref FdbStatement Set(int index, wstring val)
   {
-    _connect._dll.fdb_statement_set_string(_st, index, to!string(val).toStringz);
+    auto val2 = toAnsii(val, 1251);
+    _connect._dll.fdb_statement_set_string(_st, index, val2.toStringz);
     return this;
   }
   ref FdbStatement SetBlobAsString(int index, string val)
@@ -143,7 +145,8 @@ struct FdbStatement
   }
   ref FdbStatement SetBlobAsFile(int index, wstring fileName)
   {
-    _connect._dll.fdb_statement_set_blob_as_string(_st, index, to!string(fileName).toStringz);
+    auto val2 = toAnsii(fileName, 1251);
+    _connect._dll.fdb_statement_set_blob_as_string(_st, index, val2.toStringz);
     return this;
   }
 

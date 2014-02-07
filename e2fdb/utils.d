@@ -5,7 +5,8 @@ private import std.string;
 private import std.stdio;
 private import std.array;
 
-private extern(Windows) int MultiByteToWideChar(uint, int, char*, int, wchar*, int); 
+private extern(Windows) int MultiByteToWideChar(uint, int, char*, int, wchar*, int);
+private extern(Windows) int WideCharToMultiByte(uint, int, immutable(wchar)*, int, char*, int, int, int); 
 
 /++++++++++++++++++++++++++++/
 wstring toUtf(char[] s, uint codePage)
@@ -21,6 +22,21 @@ wstring toUtf(char[] s, uint codePage)
   }
   
   return to!wstring(result);
+}
+/++++++++++++++++++++++++++++/
+char[] toAnsii(wstring s, uint codePage)
+{
+  char[] result;
+
+  result.length = WideCharToMultiByte(codePage, 0, s.ptr, s.length, null, 0, 0, 0);
+  if (result.length)
+  {
+    int readLen = WideCharToMultiByte(codePage, 0, s.ptr, s.length, result.ptr, result.length, 0, 0);
+    if (readLen != result.length)
+      throw new Exception("toAnsii: не смогли сконвертировать текст");
+  }
+
+  return result;
 }
 /++++++++++++++++++++++++++++/
 // генерирует подключение 

@@ -94,6 +94,20 @@ public:
       }
     }
 
+    // обработаем дерево, это влияет на темплейты
+    TreeSection treeSection;
+    foreach(s; _sections)
+      if (auto t = cast(TreeSection)s)
+        treeSection = t;
+    if (treeSection)
+    {
+      if (treeSection._params.length == 0)
+        throw new EdbStructException("TreeSection: отсутствуют данные");
+      foreach(s; _sections)
+        if (auto dataSection = cast(DataSection)s)
+          ProccessTree(dataSection, treeSection);
+    }
+
     // зададим дополнительные данные
     foreach (s; _sections)
       if (auto idSection = cast(IdSection) s)
@@ -217,8 +231,11 @@ private:
   void ParseTreeSection(TreeSection section, wstring line) 
   {
     auto params = split(line, "#");
-    if (params.length >= 3)
-      section._params ~= params;
+    if (params[$-1].strip == "")
+      params.length -= 1;
+    if (params.length < 3)
+      throw new EdbStructException("TreeSection: в параметре меньше трех частей: ");
+    section._params ~= params;
   };
   /+--------------------------+/
   /+--------------------------+/
@@ -741,7 +758,7 @@ private:
   }
   /+--------------------------+/
   /+--------------------------+/
-  static SimpleValue Str2SimpleValue(wstring val)
+  SimpleValue Str2SimpleValue(wstring val)
   {
     bool IsInt(wstring str)
     {
@@ -786,5 +803,24 @@ private:
     if (IsDoubleEx(val))
       return SimpleValue(val, SimpleValue.ValueType.Double);
     throw new EdbStructException("Str2SimpleValue: непонятный тип для: " ~ val);
+  }
+  /+--------------------------+/
+  /+--------------------------+/
+  void ProccessTree(DataSection dataSection, TreeSection treeSection)
+  {
+    wstring dataName = "DATA_" ~ to!wstring(dataSection._num);
+    foreach (elm; dataSection._elements)
+    {
+      if (elm._folder != "") // если уже есть фолдер то делать здесь нечего
+        continue;
+      wstring id = elm._simples.byValue.front[0]._value;
+      foreach (param; treeSection._params)
+      {
+        if (param.length >= 4 && param.back == dataName && param[2].startsWith(id))
+        {
+          param.length = param.length;
+        }
+      }
+    }
   }
 }

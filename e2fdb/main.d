@@ -77,14 +77,14 @@ int main(string[] argv)
 
     auto writer = new WriteManager;
     if (TestBase(edbFiles))
-    {
+    {}
       writer.Run(edbFiles);
-    }
+    
   }
   catch (Exception e)
   {
     writeln;
-    writeln("worD End:" ~ e.msg);
+    writeln(e.msg);
   }
 
   write("\n\npress enter to exit");

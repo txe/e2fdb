@@ -87,11 +87,11 @@ public:
     }
     sw.stop;
     writeln;
-    writeln("lap time: ", sw.peek.seconds, " sec.");
 
     foreach (p; problems)
       writeln(p);
 
+    writeln("lap time: ", sw.peek.seconds, " sec.");
   }
 
 private:

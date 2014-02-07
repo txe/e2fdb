@@ -17,33 +17,6 @@ private import std.path;
 private alias Tuple!(wstring, "key", wstring, "value") KeyValue;
 
 /++++++++++++++++++++++++++++/
-class EdbFileParserException : Exception
-{
-  this(string msg)  { super(msg); }
-  this(wstring msg) { super(to!string(msg)); }
-}
-
-/++++++++++++++++++++++++++++/
-class EdbParserException : Exception
-{
-  this(string msg, int row = -1, wstring line = "")
-  { 
-    super(msg);
-    _row   = row;
-    _line  = line;
-  }
-  this(wstring msg, int row = -1, wstring line = "") 
-  { 
-    super(to!string(msg));
-    _row = row;
-    _line = line;
-  }
-
-  int      _row;
-  wstring  _line;
-}
-
-/++++++++++++++++++++++++++++/
 struct EdbParser
 {
  private:
@@ -55,7 +28,7 @@ private:
   int GetCurRow()
   {
     if (_curRow == -1)
-      throw new EdbParserException("EdbParser: обратились к GetCurRow раньше времени");
+      throw new EdbStructException("EdbParser: обратились к GetCurRow раньше времени");
     return _curRow;
   }
 
@@ -111,13 +84,13 @@ public:
         else if (auto s = cast(SpecSection) section)  ParseSpecSection(s,  line);
         else if (auto s = cast(AliasSection) section) ParseAliasSection(s, line);
       }
-      catch (EdbParserException e)
+      catch (EdbStructException e)
       {
-        throw new EdbParserException(e.msg, index, line);
+        throw new EdbStructException(e.msg, index, line);
       }
       catch (Exception e)
       {
-        throw new EdbParserException(e.msg, index, line);
+        throw new EdbStructException(e.msg, index, line);
       }
     }
 
@@ -207,7 +180,7 @@ private:
         case "TREE":  section = new TreeSection;  break;
         case "ALIAS": section = new AliasSection; break;
         case "ID":    section = new IdSection;    break;
-        default: throw new EdbParserException("Неизвестная секция в файле: " ~ line);
+        default: throw new EdbStructException("Неизвестная секция: " ~ line);
        }
     }
     _sections ~= section;
@@ -225,7 +198,7 @@ private:
   {
     KeyValue* param = ParseKeyValue(line);
     if (param is null)
-      throw new EdbParserException("Ошибка в описании параметра: " ~ line);
+      throw new EdbStructException("IdSection: ошибка в описании параметра: " ~ line);
     switch (param.key)
     {
       case "BASE_ID":   section._baseId   = param.value; break;
@@ -234,9 +207,9 @@ private:
        // if (param.value == "SEGMENT" || param.value == "ELEMENT" || param.value == "VENTBOX")
           section._baseType = param.value;
       //  else
-      //    throw new EdbParserException("Ошибочная значение параметра BASE_TYPE: " ~ param.value);
+      //    throw new EdbStructException("Ошибочная значение параметра BASE_TYPE: " ~ param.value);
         break;
-      default: throw new EdbParserException("Неизвестный параметр: " ~ param.key);
+      default: throw new EdbStructException("IdSection: неизвестный параметр: " ~ param.key);
     }
   };
   /+--------------------------+/
@@ -285,25 +258,25 @@ private:
     if (words.length > 2) atr.formula = words[2].strip;
 
     if (atr.name.length == 0)
-      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": старый формат атрибутов, т.к. не содержет имени атрибута");
+      throw new EdbStructException("DATA_" ~ to!wstring(num) ~ ": старый формат атрибутов, т.к. не содержет имени атрибута");
     if (words.length < 2)
-      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": старый формат атрибутов, т.к. не содежит |");
+      throw new EdbStructException("DATA_" ~ to!wstring(num) ~ ": старый формат атрибутов, т.к. не содежит |");
     if (atr.name.length > 127)
-      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": длина названия атрибута не должна превышать 127 символов");
+      throw new EdbStructException("DATA_" ~ to!wstring(num) ~ ": длина названия атрибута не должна превышать 127 символов");
     if (atr.desc.length > 127)
-      throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": длина описания атрибута не должна превышать 127 символов");
+      throw new EdbStructException("DATA_" ~ to!wstring(num) ~ ": длина описания атрибута не должна превышать 127 символов");
 
     // проверка на повторяемость номера
     if (section._atrs.length == 0)
       if (num != 0)
-        throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": номер первого атрибута в комментариях должно начинатся с нуля");
+        throw new EdbStructException("DATA_" ~ to!wstring(num) ~ ": номер первого атрибута в комментариях должно начинатся с нуля");
     if (num > 0)
       if (!((num - 1) in section._atrs))
-        throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": номер атрибута в комментариях должно должно быть больше на 1, чем предыдущий атрибут");
+        throw new EdbStructException("DATA_" ~ to!wstring(num) ~ ": номер атрибута в комментариях должно должно быть больше на 1, чем предыдущий атрибут");
     // проверка на повторяемость названия атрибута
     foreach (col, a; section._atrs)
       if (a.name == atr.name)
-        throw new EdbParserException("DATA_" ~ to!wstring(num) ~ ": имя атрибута в комментариях повторяетя, имя: " ~ atr.name ~", atr_1: " ~ to!wstring(col) ~ ", atr_2: " ~ to!wstring(num));
+        throw new EdbStructException("DATA_" ~ to!wstring(num) ~ ": имя атрибута в комментариях повторяетя, имя: " ~ atr.name ~", atr_num_1: " ~ to!wstring(col) ~ ", atr_num_2: " ~ to!wstring(num));
 
     section._atrs[num] = atr;
   }
@@ -326,13 +299,13 @@ private:
         int i0 = value.indexOf("[");
         int i1 = value.lastIndexOf("]");
         if (i0 == -1 || i0 >= i1)
-          throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": ошибка в описании параметра " ~ value);
+          throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": ошибка в описании параметра " ~ value);
         return value[i0+1 .. i1];
       }
       int i0 = value.indexOf("\"");
       int i1 = value.lastIndexOf("\"");
       if (i0 == -1 || i0 >= i1)
-        throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": ошибка в описании параметра: " ~ value);
+        throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": ошибка в описании параметра: " ~ value);
       return value[i0 + 1 .. i1];
     }
 
@@ -347,15 +320,15 @@ private:
       case "CONTROL_PARAM":     section._paramControl = to!int(param.value[1 .. $]); break;
       case "TYPES":
         if (section._elements.length != 0)
-          throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": параметр TYPES должен быть объявлен ранее типоразмеров");
+          throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": параметр TYPES должен быть объявлен ранее типоразмеров");
         foreach (index, t; param.value)
           if (t != 'F' && t != 'I' && t != 'S')
-            throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": параметр TYPES содержит неизвестный символ (" ~ t ~ ") в позиции " ~ to!wstring(index));
+            throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": параметр TYPES содержит неизвестный символ (" ~ t ~ ") в позиции " ~ to!wstring(index));
         section._typeList = param.value;
         break;
       case "FOLDER":
         if (section._elements.length > 0 && section._elements[$-1]._simples.length == 0)
-          throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": между текущим и предыдущим FOLDERом не было типоразмеров");
+          throw new EdbStructException("DATA_" ~ to!string(section._num) ~ ": между текущим и предыдущим FOLDERом не было типоразмеров");
         auto e = section.AddElement();
         int pos = param.value.lastIndexOf("|");
         if (pos == -1)
@@ -368,16 +341,16 @@ private:
           e._name = param.value[pos + 1 .. $];
           e._folder = param.value[0 .. pos];
           if (e._name is null || e._name.strip == "")
-            throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": в FOLDER есть лишняя |");
+            throw new EdbStructException("DATA_" ~ to!string(section._num) ~ ": в FOLDER есть лишняя |");
         }
         break;
       case "PROJECTION":
         if (section._elements.length == 0 || section._elements[$-1]._folder is null)
-          throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": перед параметром PROJECTION должен стоять параметр FOLDER");
+          throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": перед параметром PROJECTION должен стоять параметр FOLDER");
         int pos0 = param.value.indexOf("|");
         int pos1 = param.value.indexOf("|", pos0+1);
         if (pos0 == -1 || pos1 == -1)
-          throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": ошибка в описании параметра PROJECTION: " ~ param.value);
+          throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": ошибка в описании параметра PROJECTION: " ~ param.value);
         int t = to!int(param.value[0 .. pos0]);
         wstring name = param.value[pos0 + 1 .. pos1];
         wstring path = param.value[pos1 + 1 .. $];
@@ -388,7 +361,7 @@ private:
       case "COMMENT_FIELD2": section._paramComment2 = param.value; break;
       default:
         if (param.key.length < 30 && param.key.indexOf(" ") == -1)
-          throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": неизвестный параметр " ~ param.key);
+          throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": неизвестный параметр " ~ param.key);
         return false;
     }
     return true;
@@ -398,22 +371,22 @@ private:
   void ParseDataSectionElement(DataSection section, wstring line)
   {
     if (section._elements.length == 0)
-      throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": отсутствует начальный FOLDER");
+      throw new EdbStructException("DATA_" ~ to!string(section._num) ~ ": отсутствует начальный FOLDER");
 
     wstring[] values = SmartSplit(line);
     if (values.length < 10)
-      throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": слишком короткая строка типоразмера");
+      throw new EdbStructException("DATA_" ~ to!string(section._num) ~ ": слишком короткая строка типоразмера");
 
     if (section._typeList.length != 0)
       if (section._typeList.length != values.length)
-        throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c длиной строки типов (" ~ to!string(section._typeList.length) ~ ")");
+        throw new EdbStructException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c длиной строки типов (" ~ to!string(section._typeList.length) ~ ")");
     // проверить что не работает когда было section._typeList.length == 0
     // if (section._typeList.length == 0)
       if (section._elements.length > 0 && section._elements[0]._simples.length > 0)
       {
         int beforeCount = section._elements[0]._simples.byValue.front.length;
         if (beforeCount != values.length)
-          throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c кол-вом атрибутов в предыдущего типоразмера (" ~ to!string(beforeCount) ~ ")");
+          throw new EdbStructException("DATA_" ~ to!string(section._num) ~ ": кол-во атрибутов в типоразмере (" ~ to!string(values.length) ~") не совпадает c кол-вом атрибутов в предыдущего типоразмера (" ~ to!string(beforeCount) ~ ")");
       }
 
     SimpleValue[] simples;
@@ -430,7 +403,7 @@ private:
 
     wstring[] words = SmartSplit(line);
     if (words.length < 2)
-      throw new EdbParserException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, не найден пробел");
+      throw new EdbStructException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, не найден пробел");
 
     auto typeName = words[0];
     auto propType = PropSection.PropType.NONE;
@@ -438,14 +411,14 @@ private:
     else if (startsWith(typeName, "EDIT"))  propType = PropSection.PropType.EDIT;
     else if (startsWith(typeName, "COMBO")) propType = PropSection.PropType.COMBO;
     else if (startsWith(typeName, "CHECK")) propType = PropSection.PropType.CHECK;
-    else throw new EdbParserException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, неизвестный тип " ~ typeName);
+    else throw new EdbStructException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, неизвестный тип " ~ typeName);
 
     int enable  = endsWith(typeName, "-");
     int visible = endsWith(typeName, "#");
 
     wstring name = words[1];
     if (name.length < 3 || name[0] != '"' || name[$-1] != '"')
-      throw new EdbParserException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, не найдено наименование");
+      throw new EdbStructException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, не найдено наименование");
     name = name[1 .. $-2];
 
     // обработаем остальное
@@ -466,7 +439,7 @@ private:
       else if (startsWith(word, "P[") && word[$-1] == ']')
         propParam = word[2 .. $-2];
       else 
-        throw new EdbParserException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, неизвестный параметр " ~ word);
+        throw new EdbStructException("PROPERTIES_" ~ to!wstring(section._num) ~ ": неверный формат, неизвестный параметр " ~ word);
 
       // бла бла надо добавить в список
     }
@@ -477,7 +450,7 @@ private:
   {
     KeyValue* val = ParseKeyValue(line);
     if (val is null)
-      throw new EdbParserException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": неверный формат, неизвестный параметр " ~ line);
+      throw new EdbStructException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": неверный формат, неизвестный параметр " ~ line);
 
     switch (val.key)
     {
@@ -486,7 +459,7 @@ private:
       case "SECOND_PART": section._secondPart = to!int(val.value); break;
       default: // например - COLUMN_10
         if (!startsWith(val.key, "COLUMN_"))
-          throw new EdbParserException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": неверный формат, неизвестный параметр " ~ val.key);
+          throw new EdbStructException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": неверный формат, неизвестный параметр " ~ val.key);
         
         int columnNum = to!int(val.key[7 .. $]);
         wstring[] words = split(val.value, "|");
@@ -495,11 +468,11 @@ private:
           int pos0 = word.lastIndexOf('[');
           int pos1 = word.lastIndexOf(']');
           if (pos0 < 1 || pos1 < 1 || pos0 > pos1)
-            throw new EdbParserException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": неверная структура " ~ word);
+            throw new EdbStructException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": неверная структура " ~ word);
           int dataNum = to!int(word[pos0+1 .. pos1]);
           int index = dataNum * 10000 + columnNum;
           if (index in section._columns)
-            throw new EdbParserException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": уже есть значение колонки " ~ to!wstring(columnNum) ~ " для DATA_" ~ to!wstring(dataNum));
+            throw new EdbStructException("SPECIFICATION_" ~ to!wstring(section._specNum) ~ ": уже есть значение колонки " ~ to!wstring(columnNum) ~ " для DATA_" ~ to!wstring(dataNum));
           section._columns[index] = word[0 .. pos0];
           (new EdbFormulaParser).Parse(word[0 ..  pos0]);
         }
@@ -512,7 +485,7 @@ private:
     section._params[GetCurRow] = line;
     KeyValue* param = ParseKeyValue(line);
     if (param is null)
-      throw new EdbParserException("ALIAS: неверный формат, не найден = в " ~ line);
+      throw new EdbStructException("ALIAS: неверный формат, не найден = в " ~ line);
 
     // проверим наличие []|
     int beginPos = 0;
@@ -530,7 +503,7 @@ private:
         if (ch == ']')
         {
           if (wasSpace)
-            throw new EdbParserException("ALIAS: неверный формат, между скобкой и разделителем не должно быть пробела, в позиции " ~ to!wstring(pos));
+            throw new EdbStructException("ALIAS: неверный формат, между скобкой и разделителем не должно быть пробела, в позиции " ~ to!wstring(pos));
           break;
         }
         if (ch == ' ')
@@ -545,13 +518,13 @@ private:
             if (ints.indexOf(param.value[k]) != -1)
               continue;
             else if (param.value[k] == '[')
-              throw new EdbParserException("ALIAS: неверный формат, возможно не закрыта скобка перед разделителем, в позиции " ~ to!wstring(pos));
+              throw new EdbStructException("ALIAS: неверный формат, возможно не закрыта скобка перед разделителем, в позиции " ~ to!wstring(pos));
             else break CHECK_FOR;
         }
         if (ch == '[')
-          throw new EdbParserException("ALIAS: неверный формат, возможно не закрыта скобка перед разделителем, в позиции " ~ to!wstring(pos));
+          throw new EdbStructException("ALIAS: неверный формат, возможно не закрыта скобка перед разделителем, в позиции " ~ to!wstring(pos));
         if (ch == '{' || ch == '}')
-          throw new EdbParserException("ALIAS: неверный формат, возможно используется неверный тип скобок перед разделителем, в позиции " ~ to!wstring(pos));
+          throw new EdbStructException("ALIAS: неверный формат, возможно используется неверный тип скобок перед разделителем, в позиции " ~ to!wstring(pos));
         break; // если другие символы, то дальше проверять не будем
       }
       beginPos = pos + 1;
@@ -578,22 +551,22 @@ private:
           }
         }
       if (comm)
-        throw new EdbParserException("ALIAS: неверный формат, возможно не закрыта строка");
+        throw new EdbStructException("ALIAS: неверный формат, возможно не закрыта строка");
       
       foreach (wstring word; words)
       {
         if (word.indexOf("||") != -1)
-          throw new EdbParserException("ALIAS: неверный формат KOMPAS_PROPERTY, символы || в " ~ word);
+          throw new EdbStructException("ALIAS: неверный формат KOMPAS_PROPERTY, символы || в " ~ word);
         if (word.indexOf("::") != -1)
-          throw new EdbParserException("ALIAS: неверный формат KOMPAS_PROPERTY, символы :: в " ~ word);
+          throw new EdbStructException("ALIAS: неверный формат KOMPAS_PROPERTY, символы :: в " ~ word);
         if (word.indexOf(":|") != -1)
-          throw new EdbParserException("ALIAS: неверный формат KOMPAS_PROPERTY, символы :| в " ~ word);
+          throw new EdbStructException("ALIAS: неверный формат KOMPAS_PROPERTY, символы :| в " ~ word);
         if (word.indexOf("|:") != -1)
-          throw new EdbParserException("ALIAS: неверный формат KOMPAS_PROPERTY, символы |: в " ~ word);
+          throw new EdbStructException("ALIAS: неверный формат KOMPAS_PROPERTY, символы |: в " ~ word);
         int count1 = word.countchars("|");
         int count2 = word.countchars(":");
         if (count2 != count1 + 1)
-          throw new EdbParserException("ALIAS: неверный формат KOMPAS_PROPERTY, неверное количество : и |, в строке " ~ word);
+          throw new EdbStructException("ALIAS: неверный формат KOMPAS_PROPERTY, неверное количество : и |, в строке " ~ word);
       }
     }
   };
@@ -626,7 +599,7 @@ private:
         if (!comma)
         {
           if (lastWhite != i - 1)
-            throw new EdbParserException("SPLIT PARSER: неверный формат строки, перед кавычкой (\") должен быть пробел. Позиция символа " ~ to!string(i));
+            throw new EdbStructException("SPLIT PARSER: неверный формат строки, перед кавычкой (\") должен быть пробел. Позиция символа " ~ to!string(i));
           comma = true;
           beginWord = i;
         }
@@ -654,14 +627,14 @@ private:
         else if (beginWord == -1)
         {
           if (lastWhite != i - 1)
-            throw new EdbParserException("SPLIT PARSER: неверный формат строки, перед символом должен быть пробел. Позиция символа: " ~ to!string(i));
+            throw new EdbStructException("SPLIT PARSER: неверный формат строки, перед символом должен быть пробел. Позиция символа: " ~ to!string(i));
           beginWord = i;
         }
       }
     }
 
     if (comma)
-      throw new EdbParserException("SPLIT PARSER: неверный формат строки, строка не закончилась \"");
+      throw new EdbStructException("SPLIT PARSER: неверный формат строки, строка не закончилась \"");
     if (beginWord != -1)
       words ~= line[beginWord..$];
 
@@ -675,7 +648,7 @@ private:
     foreach (DataSectionElement el; section._elements)
       foreach (int row, SimpleValue[] simple; el._simples)
         if (section._atrs.length != simple.length)
-          throw new EdbParserException("DATA_" ~ to!string(section._num) ~ ": не совпадает кол-во атрибутов (" ~ to!string(section._atrs.length) ~ ") и значений в типоразмере (" ~ to!string(simple.length) ~ ") в строке " ~ to!string(row));
+          throw new EdbStructException("DATA_" ~ to!string(section._num) ~ ": не совпадает кол-во атрибутов (" ~ to!string(section._atrs.length) ~ ") и значений в типоразмере (" ~ to!string(simple.length) ~ ") в строке " ~ to!string(row));
         else
           return;
   }
@@ -734,10 +707,10 @@ private:
   void CheckTypeList(DataSection section)
   {
     if (section._typeList.length == 0)
-      throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": Нет TYPES");
+      throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": Нет TYPES");
     foreach (int pos, t; section._typeList)
       if (t != 'S' && t != 'I' && t != 'F')
-        throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": неизвестный тип: " ~ t ~", позиция: " ~ to!wstring(pos) ~ ", строка типов: " ~ section._typeList);
+        throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": неизвестный тип: " ~ t ~", позиция: " ~ to!wstring(pos) ~ ", строка типов: " ~ section._typeList);
 
     wstring line(int col, SimpleValue[] simples)
     {
@@ -759,11 +732,11 @@ private:
             continue;
           const wchar t = section._typeList[col];
           if (val._type == SimpleValue.ValueType.String && t != 'S')
-            throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип '" ~ t ~ "', но значение записано как строка, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
+            throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип '" ~ t ~ "', но значение записано как строка, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
       //  else  if (val._type != SimpleValue.ValueType.String && t == 'S')
-      //      throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип 'S', но значение не записано как строка, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
+      //      throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип 'S', но значение не записано как строка, номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
           else if (val._type == SimpleValue.ValueType.Double && t == 'I')
-            throw new EdbParserException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип 'I', но значение записано как 'F', номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
+            throw new EdbStructException("DATA_" ~ to!wstring(section._num) ~ ": атрибут имеет тип 'I', но значение записано как 'F', номер " ~ to!wstring(col) ~ " из " ~ to!wstring(section._typeList.length), row, line(col, simples));
         }
   }
   /+--------------------------+/
@@ -812,6 +785,6 @@ private:
       return SimpleValue(val.replace(",", "."), SimpleValue.ValueType.Double);
     if (IsDoubleEx(val))
       return SimpleValue(val, SimpleValue.ValueType.Double);
-    throw new EdbParserException("Str2SimpleValue: непонятный тип для: " ~ val);
+    throw new EdbStructException("Str2SimpleValue: непонятный тип для: " ~ val);
   }
 }

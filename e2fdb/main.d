@@ -5,6 +5,7 @@ import std.conv;
 import std.string;
 import std.parallelism;
 import edb.parser;
+import edb.structure;
 import helper.fb;
 import fdb.writeManager;
 import fdb.fdbConvert;
@@ -37,22 +38,26 @@ bool TestBase(string[] edbFiles)
       auto edbStruct = EdbParser().Parse(edbFile);
       auto fdbStruct = FdbConvert().Convert(edbStruct);
     }
-    catch (EdbParserException e)
+    catch (EdbStructException e)
     { 
-      auto txt = "\n*************************\n" ~ e.msg ~ "\nfile:\t" ~ edbFile ~ "\nrow:\t" ~ to!string(e._row == -1 ? -1 : e._row + 1) ~ "\nline:\t" ~ to!string(e._line) ~ "\n*************************";
+      auto txt = "\n+++++++++++++++++++++++++++++++++++++++++++++\n" ~ e.msg ~ "\nfile: " ~ edbFile ~ "\nrow: " ~ to!string(e._row == -1 ? -1 : e._row + 1) ~ "\nline: " ~ to!string(e._line);
       problems ~= txt;
     }
     catch (Exception e)
     {
-      problems ~= e.msg;
+      problems ~= "\n+++++++++++++++++++++++++++++++++++++++++++++\n" ~ e.msg ~ "\nfile: " ~ edbFile;
     }
 
   if (edbFiles.length == 0)
     problems ~= "Отсутствуют файлы";
 
+  writeln;
   if (problems)
     foreach (problem; problems)
-      writeln(problem);
+    {
+      write(problem);
+      stdout.flush(); // требуется, т.к. если слишком много сообщений будет падать
+    }
 
   auto f = File(std.file.thisExePath.dirName ~ "\\+log.txt", "w");
   f.write(problems.join("\n"));
@@ -62,14 +67,10 @@ bool TestBase(string[] edbFiles)
 /++++++++++++++++++++++++++++/
 int main(string[] argv)
 {
-  // для генерации кода оберток
-  // utils.h2d("c:\\e2fdb-helper.h", "c:\\txt.d", "fdb_", "dbDll");
-  // return 0;
-
   try
   {
     SetConsoleOutputCP(65001);
-    const path = "d:\\+edb";
+    const path = "d:\\edb2";
 
     writeln("collecting files before ...");
     string[] edbFiles = get_files(path, "*.edb");
@@ -77,16 +78,16 @@ int main(string[] argv)
     auto writer = new WriteManager;
     if (TestBase(edbFiles))
     {
+      writer.Run(edbFiles);
     }
-    writer.Run(edbFiles);
-    
   }
   catch (Exception e)
   {
-     writeln(e.msg);
+    writeln;
+    writeln("worD End:" ~ e.msg);
   }
 
-  write("\npress enter to exit");
+  write("\n\npress enter to exit");
   readln();
   return 0;
 }

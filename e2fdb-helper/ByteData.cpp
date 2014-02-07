@@ -1,8 +1,9 @@
 #include "ByteData.h"
 #include <fstream>
 
- #include "lzo/lzo1y.h"
- #include "lzo/lzo_asm.h"
+#include "lzo/lzo1y.h"
+#include "lzo/lzo_asm.h"
+
 //-------------------------------------------------------------------------
 ByteData::ByteData(): m_pData(NULL), m_lSize(0), m_bAutoDelete(false)
 {
@@ -153,13 +154,11 @@ void ByteData::Compress()
   lExtraSize = (m_lSize / 1024 + 1) * 16;
   char *pNewData = new char[m_lSize + lExtraSize + lSizeOfSize];
   
-  char pWrkData[LZO1Y_MEM_COMPRESS];
-  //char pWrkData[LZO1Y_999_MEM_COMPRESS];
+  char pWrkData[LZO1Y_999_MEM_COMPRESS];
   // Запишем размер
   memcpy(pNewData, &m_lSize, lSizeOfSize);
 
-  lzo1y_1_compress(
-  //lzo1y_999_compress( 
+  lzo1y_999_compress( 
     (unsigned char*)m_pData, 
     m_lSize, 
     (unsigned char*)(pNewData + lSizeOfSize), 

@@ -17,6 +17,7 @@ class FdbPacket
 /++++++++++++++++++++++++++++/
 class FdbVirtData
 {
+  int            _num; // номер соответсвует номеру DATA
   FdbAttribute[] _atrs;
   FdbTemplate[]  _templates;
 }
@@ -26,11 +27,10 @@ class FdbTemplate
   wstring      _folder = null;
   wstring      _name = null;
   FdbStdSize[] _sizes;
-  FdbModel     _model;
+  wstring      _model;
   FdbFrw[]     _frws;
 
   int          _rId;
-  int[]        _rAtrId;
 }
 /++++++++++++++++++++++++++++/
 class FdbAttribute
@@ -60,7 +60,7 @@ class FdbStdSize
   wstring       _pdf;
   wstring       _jpg;
 
-  this(SimpleValue[] values, wstring id, wstring oldIndex, wstring oldName, wstring pdf, wstring jpg)
+  this(SimpleValue[] values, wstring id, wstring oldIndex, wstring oldName, wstring jpg, wstring pdf)
   {
     _values = values;
     _id = id;

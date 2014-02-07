@@ -113,7 +113,7 @@ private:
       _cache_packet_types[fdbPacket._type] = fdbPacket._rType;
     }
     // ненастоящий репрезинтейшн
-    _repId = st.Prepare("INSERT INTO REPRESENTATION (DATA, DIGEST) VALUES( ?, ? ) RETURNING ID").SetBlob(1, "20").Set(2, "20").Execute().GetInt(1);
+    _repId = st.Prepare("INSERT INTO REPRESENTATION (DATA, DIGEST) VALUES( ?, ? ) RETURNING ID").SetBlobAsString(1, "20").Set(2, "20").Execute().GetInt(1);
     // заполним id для имен атрибутов
     foreach (data; fdbPacket._fdbVirtData)
       foreach (atr; data._atrs)
@@ -182,6 +182,8 @@ private:
     stSize.Prepare("INSERT INTO STANDARDSIZE (OBJECTID, IDENTIFIER, OLD_INDEX, OLD_NAME) VALUES (?, ?, ?, ?) RETURNING ID");
     FdbStatement stVal = GetStatement();
     stVal.Prepare("EXECUTE PROCEDURE WRITE_STD_SIZE_VAL(?,?,?,?,?)");
+
+
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
       {
@@ -191,12 +193,13 @@ private:
         temp._rId = stTemp.Execute().GetInt(1);
 
         // создадим атрибуты для темплейта
+        int[] atrIdList;
         foreach (atr; data._atrs)
         {
           stAtr.Set(1, temp._rId).Set(2, atr._num).Set(3, atr._oldNum).Set(4, atr._type).Set(5, atr._rNameId).Set(6, atr._rDescId);
           stAtr.Set(7, "" /+measure+/).Set(8, ""/+var+/).Set(9, "" /+formula+/).SetNull(10);
           int atrId = stAtr.Execute().GetInt(1);
-          temp._rAtrId ~= atrId;
+          atrIdList ~= atrId;
         }
 
         // создадим типоразмеры
@@ -207,7 +210,7 @@ private:
           {
             if (val._type == SimpleValue.ValueType.Null)
               continue;
-            stVal.Set(1, temp._rAtrId[col]);
+            stVal.Set(1, atrIdList[col]);
             stVal.Set(2, stdSizeId);
             val._type == SimpleValue.ValueType.Int ? stVal.Set(3, to!int(val._value)) : stVal.SetNull(3);
             val._type == SimpleValue.ValueType.Double ? stVal.Set(4, to!double(val._value)) : stVal.SetNull(4);

@@ -4,6 +4,26 @@ private import std.stdio;
 private import std.conv;
 
 /++++++++++++++++++++++++++++/
+class EdbStructException : Exception
+{
+  this(string msg, int row = -1, wstring line = "")
+  { 
+    super(msg);
+    _row   = row;
+    _line  = line;
+  }
+  this(wstring msg, int row = -1, wstring line = "") 
+  { 
+    super(to!string(msg));
+    _row = row;
+    _line = line;
+  }
+
+  int      _row;
+  wstring  _line;
+}
+
+/++++++++++++++++++++++++++++/
 class EdbSection 
 {
 }

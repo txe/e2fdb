@@ -33,7 +33,7 @@ public:
     if (!exists(to!string(lfrPath))) // иначе лежит на одну папку выше
       lfrPath = lfrPath.dirName.dirName ~ "\\" ~ lfrPath.baseName;
     if (!exists(to!string(lfrPath)))
-      throw new Exception("FdbConvert: не смогли найти lfr для " ~ to!string(packet._name));
+      throw new EdbStructException("FdbConvert: не смогли найти lfr: " ~ to!string(packet._name));
     // папка где лежит edb
     auto edbFolder = edbStruct._path.dirName;
 
@@ -51,6 +51,7 @@ public:
       if (DataSection s = cast (DataSection) section)
       {
         auto virtData = new FdbVirtData;
+        virtData._num = s._num;
         CreateTableAttr(virtData, s);
         CreateFormulaAttr(virtData, aliasSection);
         CreateOtherAttr(virtData, s);
@@ -99,22 +100,48 @@ private:
     auto temp = new FdbTemplate;
     temp._name   = elm._name[0..1].toUpper ~ elm._name[1..$];
     temp._folder = elm._folder;
+    
+    bool buildPath(ref wstring fileName, wstring path)
+    {
+      if (fileName == "")
+        return true;
+      fileName = to!wstring(buildNormalizedPath(to!string(path ~ fileName)));
+      return exists(to!string(fileName));
+    }
+
+    // проверим что 3D у все одинаковое
+    temp._model = elm._simples.byValue.front[2]._value;
+    foreach (row, simple; elm._simples)
+      if (temp._model != simple[2]._value)
+        throw new EdbStructException("DATA_" ~ to!wstring(virtData._num) ~ ": m3d типоразмера (" ~ simple[2]._value ~") не совпадает с m3d темплейта (" ~ temp._model ~ ")", row);
+    if (!buildPath(temp._model, edbFolder ~ "\\M3d\\"))
+        throw new Exception("DATA_" ~ to!string(virtData._num) ~ ": не смогли найти m3d: " ~ to!string(temp._model));
+
     foreach (row, simple; elm._simples)
     {
-      // if (IsEngSys) id = simple(11);
+      // вычислим ID для типоразмера
+      // TODO: if (IsEngSys) id = simple(11);
       wstring id = simple[0]._value;
       wstring oldIndex = "";
-      wstring oldName = "";
-      wstring[] words = id.split("#");
+      wstring oldName  = "";
+      wstring[] words  = id.split("#");
       if (words.length > 1)
       {
         if (words.length != 3) // если и разделится, то только на три части
-          throw new Exception("fdbConvert: ошибка определения id типоразмера");
+          throw new EdbStructException("DATA_" ~ to!wstring(virtData._num) ~ ": неверный формат id типоразмера", row);
         id = words[0];
         oldIndex = words[1];
         oldName = words[2];
       }
-      temp._sizes ~= new FdbStdSize(simple, id, oldIndex, oldName, "", ""); // не забыть проверить что бы все 3d было у всех одинаковым ))
+
+      wstring jpg = simple[3]._value;
+      if (!buildPath(jpg, edbFolder ~ "\\Jpg\\"))
+        throw new EdbStructException("DATA_" ~ to!wstring(virtData._num) ~ ": не смогли найти jpg: " ~ temp._model, row);
+      wstring pdf = simple[4]._value;
+      if (!buildPath(pdf, edbFolder ~ "\\Pdf\\"))
+        throw new EdbStructException("DATA_" ~ to!wstring(virtData._num) ~ ": не смогли найти pdf: " ~ pdf, row);
+
+      temp._sizes ~= new FdbStdSize(simple, id, oldIndex, oldName, jpg, pdf);
     }
 
     virtData._templates ~= temp;

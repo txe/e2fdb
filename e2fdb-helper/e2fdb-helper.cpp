@@ -5,6 +5,8 @@
 #include "e2fdb-helper.h"
 #include <list>
 #include "ibpp/ibpp.h"
+#include "ByteData.h"
+#include "aux_ext.h"
 
 
 #define BEGIN_FUN try {
@@ -244,6 +246,24 @@ BEGIN_FUN
     return false;
 
   ((IBPP::IStatement*)st)->Set(index, std::string(value));
+  return true;
+END_FUN
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API bool fdb_statement_set_blob_as_file(int st, int index, const char* filePath)
+{
+BEGIN_FUN
+  if (!st)
+    return false;
+
+  IBPP::Statement _st = (IBPP::IStatement*)st;
+  IBPP::Blob blob = IBPP::BlobFactory(_st->DatabasePtr(), _st->TransactionPtr());
+
+  ByteData data;
+  data.LoadFromFile((LPCWSTR)aux::a2w(filePath));
+  data.Compress();
+  data.SaveToBlob(blob);
+  _st->Set(index, blob);
   return true;
 END_FUN
 }

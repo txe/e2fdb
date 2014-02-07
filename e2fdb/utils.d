@@ -17,7 +17,7 @@ wstring toUtf(char[] s, uint codePage)
   {
     int readLen = MultiByteToWideChar(codePage, 0, s.ptr, s.length, result.ptr, result.length);
     if (readLen != result.length)
-      throw new Exception("");
+      throw new Exception("toUtf: не смогли сконвертировать текст");
   }
   
   return to!wstring(result);

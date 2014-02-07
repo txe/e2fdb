@@ -92,13 +92,13 @@ struct FdbStatement
   ref FdbStatement Prepare(string query)
   { 
     if (!_connect._dll.fdb_statement_prepare(_st, query.toStringz))
-      throw new Exception("failed fdb_statement_prepare");
+      throw new Exception("CONNECT: failed fdb_statement_prepare");
     return this;
   }
   ref FdbStatement Execute(string query = "")
   {
     if (!_connect._dll.fdb_statement_execute(_st, query.toStringz))
-      throw new Exception("failed fdb_statement_execute");
+      throw new Exception("CONNECT: failed fdb_statement_execute");
     return this;
   }
   ref FdbStatement ExecuteImmediate(string query)
@@ -136,9 +136,14 @@ struct FdbStatement
     _connect._dll.fdb_statement_set_string(_st, index, to!string(val).toStringz);
     return this;
   }
-  ref FdbStatement SetBlob(int index, string val)
+  ref FdbStatement SetBlobAsString(int index, string val)
   {
     _connect._dll.fdb_statement_set_blob_as_string(_st, index, val.toStringz);
+    return this;
+  }
+  ref FdbStatement SetBlobAsFile(int index, wstring fileName)
+  {
+    _connect._dll.fdb_statement_set_blob_as_string(_st, index, to!string(fileName).toStringz);
     return this;
   }
 

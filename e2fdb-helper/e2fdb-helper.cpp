@@ -310,3 +310,25 @@ BEGIN_FUN
   return true;
 END_FUN
 }
+/************************************************************************/
+/*                         Kompas                                       */
+/************************************************************************/
+E2FDBHELPER_API int  kompas_start(int* major, int* minor)
+{
+  return 0;
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API bool kompas_stop(int kompas)
+{
+  return 0;
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API bool kompas_m3d(int kompas, const char* m3dFile, bool isEngSys, char** crc, char** icon)
+{
+  return 0;
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API bool kompas_frw(int kompas, const char* fromLfr, const char* toFrw, bool isEngSys, char** crc, char** icon)
+{
+  return 0;
+}

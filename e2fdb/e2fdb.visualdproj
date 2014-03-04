@@ -196,6 +196,7 @@
   </Folder>
   <Folder name="helper">
    <File path="helper\helper.fb.d" />
+   <File path="helper\helper.kompas.d" />
   </Folder>
   <Folder name="m-console">
    <File path="m-console\consoleWriter.d" />

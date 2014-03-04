@@ -12,12 +12,14 @@ private import std.conv;
 private import std.string;
 private import std.stdio;
 private import std.datetime;
+private import std.digest.md;
+private import std.file;
 
 class WriteManager
 {
 private:
   ConsoleWriter  _console;
-  FileStorage    _fileStorage;
+  FileStorage    _fileStorage = new FileStorage;
   FdbConnect     _provider = new FdbConnect;
   FdbTransaction _trans;
 
@@ -43,7 +45,7 @@ public:
     std.file.copy(thisDir ~ "/blank.fdb", thisDir ~ "/breeze.fdb");
     write("ok");
 
-    write("\nconnect to fdb ... ");
+    write("\nconnect fdb ... ");
     if (!_provider.Connect(thisDir ~ "\\breeze.fdb", "sysdba", "masterkey"))
     {
       write("error, can't create connect");
@@ -176,6 +178,29 @@ private:
   /++++++++++++++++++++++++++++/
   void WriteTempletes(FdbPacket fdbPacket)
   {
+    FdbStatement stModel = GetStatement();
+    stModel.Prepare("INSERT INTO MODEL (MODEL, THUMBNAIL, DIGEST, MODEL_VERSION) VALUES( ?, ?, ?, ? ) RETURNING ID");
+    static int[wstring] models;
+    foreach (data; fdbPacket._fdbVirtData)
+      foreach (FdbTemplate temp; data._templates)
+      {
+        if (temp._model.length == 0)
+          continue;
+        if (temp._model in models)
+          continue;
+        bool val = to!string(temp._model).exists;
+        
+        MD5 md5;
+        md5.start();
+        auto bytes = cast(ubyte[])read(to!string(temp._model));
+        md5.put(bytes);
+        string digest = toHexString(md5.finish);
+
+        stModel.SetBlobAsFile(1, temp._model).SetBlobAsString(2, "12").Set(3, digest).Set(4, 2);
+        int modelId = stModel.Execute.GetInt(1);
+        models[temp._model] = modelId;
+      }
+    return;
     FdbStatement stTemp = GetStatement();
     stTemp.Prepare("INSERT INTO OBJECT (NAME, MODELID, OBJECTTYPEID, PACKETID, FOLDERID, REPRESENTATIONID) VALUES ( ?, ?, ?, ?, ?, ? ) RETURNING ID");
     FdbStatement stAtr = GetStatement();

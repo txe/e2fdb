@@ -18,7 +18,7 @@ class FdbConnect
 
   bool Connect(string basePath, string user, string password)
   {
-    _dll.Load("e2fdb-helper.dll");
+    _dll.Load();
     _provider = _dll.fdb_provider_open("".toStringz, basePath.toStringz, user.toStringz, password.toStringz);
     return _provider > 0;
   }

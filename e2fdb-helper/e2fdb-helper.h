@@ -38,10 +38,12 @@ E2FDBHELPER_API bool fdb_statement_set_string(int st, int index, const char* val
 E2FDBHELPER_API bool fdb_statement_set_blob_as_string(int st, int index, const char* value);
 E2FDBHELPER_API bool fdb_statement_set_blob_as_file(int st, int index, const char* filePath);
 
-
 E2FDBHELPER_API bool fdb_statement_get_is_null(int st, int index);
 E2FDBHELPER_API bool fdb_statement_get_int(int st, int index, int* value);
 E2FDBHELPER_API bool fdb_statement_get_double(int st, int index, double* value);
 E2FDBHELPER_API bool fdb_statement_get_string(int st, int index, char* value);
 
-
+E2FDBHELPER_API int  kompas_start(int* major, int* minor);
+E2FDBHELPER_API bool kompas_stop(int kompas);
+E2FDBHELPER_API bool kompas_m3d(int kompas, const char* m3dFile, bool isEngSys, char** crc, char** icon);
+E2FDBHELPER_API bool kompas_frw(int kompas, const char* fromLfr, const char* toFrw, bool isEngSys, char** crc, char** icon);

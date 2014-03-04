@@ -51,10 +51,6 @@ public:
     {
       SetCurRow(index);
 
-      //writeln(index);
-      //if (baseName(edbPath) == "Заглушки до 500 мм ОСТ 36-47-81.edb" && index == 100)
-      //  isComment = isComment;
-
       line = line.strip;
       try 
       {

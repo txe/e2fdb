@@ -71,12 +71,12 @@ public:
   fdb_statement_get_double_fp fdb_statement_get_double;
   fdb_statement_get_string_fp fdb_statement_get_string;
 
-  void Load(const(char*) name)
+  void Load()
   {
     if (_module != null)
       return;
 
-    _module = LoadLibraryA(name);
+    _module = LoadLibraryA("e2fdb-helper.dll");
     if (_module == null)  throw new Exception("fbDll._module == null");
 
     fdb_error = cast(fdb_error_fp) GetProcAddress(_module, "fdb_error");

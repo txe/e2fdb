@@ -1,20 +1,24 @@
 module helper.kompas;
 import std.c.windows.windows;
 
-alias extern(Windows) int function(int* major, int* minor) kompas_start_fp;
-alias extern(Windows) bool function(int kompas) kompas_stop_fp;
-alias extern(Windows) bool function(int kompas, const char* fromFile, const char* copyTo, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen) kompas_m3d_fp;
-alias extern(Windows) bool function(int kompas, const char* fromFile, const char* copyTo, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen) kompas_frw_fp;
+// 1 - не смогли запустить комп
+// 2 - не совпадает версия компаса
+// 3 - не смогли запусить кэш
+// 4 - не совпадает версия кэша
+alias extern(Windows) int  function(const char* cacheDb, int majorVer, int minorVer) kompas_cache_init_fp;
+alias extern(Windows) void function(int cache) kompas_cache_stop_fp;
+alias extern(Windows) void function(int cache) kompas_cache_clear_temp_fp;
+alias extern(Windows) bool function(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen) kompas_cache_file_info_fp;
 
 struct kompasDll
 {
 public:
   HMODULE _module;
 
-  kompas_start_fp kompas_start;
-  kompas_stop_fp  kompas_stop;
-  kompas_m3d_fp   kompas_m3d;
-  kompas_frw_fp   kompas_frw;
+  kompas_cache_init_fp       kompas_cache_init;
+  kompas_cache_stop_fp       kompas_cache_stop;
+  kompas_cache_clear_temp_fp kompas_cache_clear_temp;
+  kompas_cache_file_info_fp  kompas_cache_file_info;
 
   void Load()
   {
@@ -24,14 +28,18 @@ public:
     _module = LoadLibraryA("e2fdb-helper.dll");
     if (_module == null)  throw new Exception("fbDll._module == null");
 
-    kompas_start = cast(kompas_start_fp) GetProcAddress(_module, "kompas_start");
-    if (kompas_start == null) throw new Exception("kompas_start == null");
-    kompas_stop = cast(kompas_stop_fp) GetProcAddress(_module, "kompas_stop");
-    if (kompas_stop == null) throw new Exception("kompas_stop == null");
-    kompas_m3d = cast(kompas_m3d_fp) GetProcAddress(_module, "kompas_m3d");
-    if (kompas_m3d == null) throw new Exception("kompas_m3d == null");
-    kompas_frw = cast(kompas_frw_fp) GetProcAddress(_module, "kompas_frw");
-    if (kompas_frw == null) throw new Exception("kompas_frw == null");
+    kompas_cache_init = cast(kompas_cache_init_fp) GetProcAddress(_module, "kompas_cache_init");
+    if (kompas_cache_init == null)
+      throw new Exception("kompas_cache_init == null");
+    kompas_cache_stop = cast(kompas_cache_stop_fp) GetProcAddress(_module, "kompas_cache_stop");
+    if (kompas_cache_stop == null)
+      throw new Exception("kompas_cache_stop == null");
+    kompas_cache_clear_temp = cast(kompas_cache_clear_temp_fp) GetProcAddress(_module, "kompas_cache_clear_temp");
+    if (kompas_cache_clear_temp == null)
+      throw new Exception("kompas_cache_clear_temp == null");
+    kompas_cache_file_info = cast(kompas_cache_file_info_fp) GetProcAddress(_module, "kompas_cache_file_info");
+    if (kompas_cache_file_info == null)
+      throw new Exception("kompas_cache_file_info == null");
   }
 
   void Free()

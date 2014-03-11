@@ -312,24 +312,24 @@ BEGIN_FUN
 END_FUN
 }
 /************************************************************************/
-/*                         Kompas                                       */
+/*                         kompas cache                                 */
 /************************************************************************/
-E2FDBHELPER_API int kompas_start(int* major, int* minor)
+E2FDBHELPER_API int kompas_cache_init(const char* cacheDb, int majorVer, int minorVer)
 {
-  return KompasApp::CreateNew(major, minor);
+  return KompasApp::CreateNew(cacheDb, majorVer, minorVer);
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API bool kompas_stop(int kompas)
+E2FDBHELPER_API void kompas_cache_stop(int cache)
 {
-  return KompasApp::Close(kompas);
+  KompasApp::Close(cache);
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API bool kompas_m3d(int kompas, const char* fromFile, const char* copyTo, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
+E2FDBHELPER_API void kompas_cache_clear_temp(int cache)
 {
-  return 0;
+
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API bool kompas_frw(int kompas, const char* fromFile, const char* copyTo, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
+E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
 {
-  return 0;
+  return false;
 }

@@ -3,7 +3,7 @@
 class KompasApp
 {
 public:
-  static int  CreateNew(int* major, int* minor);
-  static bool Close(int kompas);
+  static int  CreateNew(const char* cacheDb, int majorVer, int minorVer);
+  static bool Close(int cache);
 };
 

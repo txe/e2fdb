@@ -7,45 +7,52 @@ private import std.string;
 
 class MODEL_INFO {}
 
-struct model_md5
+struct file_info
 {
-  wstring modelPath;
-  wstring md5;
-  bool    isCache;
+  wstring filePath;
+  wstring digest;
   char*   data;
   int     dataLen;
   char*   icon;
   int     iconLen;
   char*   crc;
   int     crcLen;
-  this(wstring _modelPath, wstring _md5) { modelPath = _modelPath; md5 = _md5; isCache = false; dataLen = 0; iconLen = 0; crcLen = 0; }
+  this(wstring _filePath, wstring _digest) { filePath = _filePath; digest = _digest; dataLen = 0; iconLen = 0; crcLen = 0; }
 }
 
 /++++++++++++++++++++++++++++++++++++++++/
 class FileStorage
 {
   kompasDll _dll;
-  int       _kompasId;
+  int       _cacheId;
 
   /++++++++++++++++++++++++++/
   // инициализируем работу стореджа
   void Init()
   {
     _dll.Load;
-    InitKompas();
-    InitCache();
+    write("\ninit cache ... " );
+    stdout.flush();
+
+    int kompas = _dll.kompas_cache_init("", 15, 0);
+    if (kompas < 10)
+      throw new Exception("FileStorage: не смогли запустить Компас");
+
+    write("ok");
+    stdout.flush();
+
   }
   /+++++++++++++++++++++++++++/
   // останавливает работу стореджа
   void Stop()
   {
-    
+    _dll.kompas_cache_stop(_cacheId);
   }
   /+++++++++++++++++++++++++++/
   // запускает обработку файлов
   void RunJob(int[wstring] modelPaths)
   {
-    JobThread(modelPaths, _dll, _kompasId);
+    JobThread(modelPaths, _dll, _cacheId);
   }
   /+++++++++++++++++++++++++++/
   void WaitJob()
@@ -58,36 +65,12 @@ class FileStorage
     return null;
   }
 private:
-  /+++++++++++++++++++++++++++++++++/
-  void InitKompas()
-  {
-    write("\ninit kompas ... " );
-    stdout.flush();
-
-    int major, minor;
-    int kompas = _dll.kompas_start(&major, &minor);
-    if (kompas == 0)
-       throw new Exception("FileStorage: не смогли запустить Компас");
-    if (major != 15)
-    {
-      _dll.kompas_stop(kompas);
-      throw new Exception("FileStorage: неверная версия Компаса");
-    }
-
-    write("ok");
-    stdout.flush();
-  }
-  /++++++++++++++++++++++++++++++/
-  void InitCache()
-  {
-
-  }
   /+++++++++++++++++++++++++++++++++++/
-  static void JobThread(int[wstring] modelPaths, kompasDll dll, int kompasId)
+  static void JobThread(int[wstring] modelPaths, kompasDll dll, int cacheId)
   {
     wstring[wstring] modelHashByPath; // список хешей моделей по пути
     int[wstring]     hashInJob;       // int[MD5], которые запустим в работу
-    model_md5[]      jobModels;       // модели, которые запустили в работу
+    file_info[]      fileInfos;        // модели, которые запустили в работу
 
     // разберем сколько моделей надо обработать
     foreach (modelPath, num; modelPaths)
@@ -103,30 +86,15 @@ private:
           if (!(digest in hashInJob))
           {
             hashInJob[digest] = 1;
-            jobModels ~= model_md5(modelPath, digest);
+            fileInfos ~= file_info(modelPath, digest);
           }
         }
       }
 
-    // получим готовые файлы из кеша
-    FileFromCache(jobModels);
-    // обработаем файлы в компасе
-    FileFromKompas(jobModels, dll, kompasId);
-  }
-  /+++++++++++++++++++++++++++/
-  static void FileFromCache(model_md5[] jobModels)
-  {
-
-  }
-  /++++++++++++++++++++++++++/
-  static bool FileFromKompas(model_md5[] jobModels, kompasDll dll, int kompasId)
-  {
-    foreach (jobModel; jobModels)
+    // получим данные для файлов
+    foreach (fileInfo; fileInfos)
     {
-      if (!dll.kompas_m3d(kompasId, toAnsii(jobModel.modelPath, 1251).toStringz, "", false, &jobModel.data, &jobModel.dataLen, &jobModel.crc, &jobModel.crcLen, &jobModel.icon, &jobModel.iconLen))
-        return false;
+      dll.kompas_cache_file_info(cacheId, toAnsii(fileInfo.digest, 1251).toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen);
     }
-
-    return true;
   }
 }

@@ -12,7 +12,7 @@ struct KOMPAS_INFO
 };
 
 //-------------------------------------------------------------------------
-int KompasApp::CreateNew(int* major, int* minor)
+int KompasApp::CreateNew(const char* cacheDb, int majorVer, int minorVer)
 {
   CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
@@ -26,8 +26,6 @@ int KompasApp::CreateNew(int* major, int* minor)
 
   KOMPAS_INFO* info = new KOMPAS_INFO;
   info->kompasApp = stubApp;
-  *major = 15;
-  *minor = 0;
 
   return (int)info;
 }

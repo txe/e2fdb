@@ -3,7 +3,10 @@ private import core.sys.windows.windows;
 private import std.conv;
 private import std.string;
 private import std.stdio;
+private import std.file;
 private import std.array;
+private import std.string;
+private import std.digest.md;
 
 private extern(Windows) int MultiByteToWideChar(uint, int, char*, int, wchar*, int);
 private extern(Windows) int WideCharToMultiByte(uint, int, immutable(wchar)*, int, char*, int, int, int); 
@@ -13,9 +16,10 @@ wstring getMD5(wstring filePath)
 {
   MD5 md5;
   md5.start();
-  auto bytes = cast(ubyte[])read(to!string(temp._model));
+  auto bytes = cast(ubyte[]) read(to!string(filePath));
   md5.put(bytes);
-  return toHexString(md5.finish);
+  ubyte[16] digest = md5.finish;
+  return cast(wstring)digest.toHexString;
 }
 /++++++++++++++++++++++++++++/
 wstring toUtf(char[] s, uint codePage)

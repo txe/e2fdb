@@ -3,8 +3,8 @@ import std.c.windows.windows;
 
 alias extern(Windows) int function(int* major, int* minor) kompas_start_fp;
 alias extern(Windows) bool function(int kompas) kompas_stop_fp;
-alias extern(Windows) bool function(int kompas, const char* m3dFile, bool isEngSys, char** crc, char** icon) kompas_m3d_fp;
-alias extern(Windows) bool function(int kompas, const char* fromLfr, const char* toFrw, bool isEngSys, char** crc, char** icon) kompas_frw_fp;
+alias extern(Windows) bool function(int kompas, const char* fromFile, const char* copyTo, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen) kompas_m3d_fp;
+alias extern(Windows) bool function(int kompas, const char* fromFile, const char* copyTo, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen) kompas_frw_fp;
 
 struct kompasDll
 {

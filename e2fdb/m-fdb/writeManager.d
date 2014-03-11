@@ -80,7 +80,7 @@ public:
         RunFileJobs(fdbStruct);
         WritePacketAndFolderTree(fdbStruct);
         WriteTempletes(fdbStruct);
-        WriteFiles();
+        WriteFiles(fdbStruct);
       }
       catch (Exception e) 
       {
@@ -142,7 +142,11 @@ private:
   /++++++++++++++++++++++++++++/
   void RunFileJobs(FdbPacket fdbPacket)
   {
-
+    int[wstring] models;
+    foreach (data; fdbPacket._fdbVirtData)
+      foreach (FdbTemplate temp; data._templates)
+        models[temp._model] = 0;
+    _fileStorage.RunJob(models);
   }
   /++++++++++++++++++++++++++++/
   void WritePacketAndFolderTree(FdbPacket fdbPacket)
@@ -178,29 +182,6 @@ private:
   /++++++++++++++++++++++++++++/
   void WriteTempletes(FdbPacket fdbPacket)
   {
-    FdbStatement stModel = GetStatement();
-    stModel.Prepare("INSERT INTO MODEL (MODEL, THUMBNAIL, DIGEST, MODEL_VERSION) VALUES( ?, ?, ?, ? ) RETURNING ID");
-    static int[wstring] models;
-    foreach (data; fdbPacket._fdbVirtData)
-      foreach (FdbTemplate temp; data._templates)
-      {
-        if (temp._model.length == 0)
-          continue;
-        if (temp._model in models)
-          continue;
-        bool val = to!string(temp._model).exists;
-        
-        MD5 md5;
-        md5.start();
-        auto bytes = cast(ubyte[])read(to!string(temp._model));
-        md5.put(bytes);
-        string digest = toHexString(md5.finish);
-
-        stModel.SetBlobAsFile(1, temp._model).SetBlobAsString(2, "12").Set(3, digest).Set(4, 2);
-        int modelId = stModel.Execute.GetInt(1);
-        models[temp._model] = modelId;
-      }
-    return;
     FdbStatement stTemp = GetStatement();
     stTemp.Prepare("INSERT INTO OBJECT (NAME, MODELID, OBJECTTYPEID, PACKETID, FOLDERID, REPRESENTATIONID) VALUES ( ?, ?, ?, ?, ?, ? ) RETURNING ID");
     FdbStatement stAtr = GetStatement();
@@ -248,8 +229,31 @@ private:
       }
   }
   /++++++++++++++++++++++++++++/
-  void WriteFiles()
+  void WriteFiles(FdbPacket fdbPacket)
   {
-    
+    _fileStorage.WaitJob;
+
+    FdbStatement stModel = GetStatement();
+    stModel.Prepare("INSERT INTO MODEL (MODEL, THUMBNAIL, DIGEST, MODEL_VERSION) VALUES( ?, ?, ?, ? ) RETURNING ID");
+    foreach (data; fdbPacket._fdbVirtData)
+      foreach (FdbTemplate temp; data._templates)
+      {
+        if (temp._model.length == 0)
+          continue;
+        
+        MODEL_INFO model = _fileStorage.GetModel(temp._model);
+
+/+        bool val = to!string(temp._model).exists;
+        MD5 md5;
+        md5.start();
+        auto bytes = cast(ubyte[])read(to!string(temp._model));
+        md5.put(bytes);
+        string digest = toHexString(md5.finish);
+
+        stModel.SetBlobAsFile(1, temp._model).SetBlobAsString(2, "12").Set(3, digest).Set(4, 2);
+        int modelId = stModel.Execute.GetInt(1);
+        models[temp._model] = modelId;
+        +/
+      }
   }
 }

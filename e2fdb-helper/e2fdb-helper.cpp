@@ -7,6 +7,7 @@
 #include "ibpp/ibpp.h"
 #include "ByteData.h"
 #include "aux_ext.h"
+#include "KompasApp.h"
 
 
 #define BEGIN_FUN try {
@@ -313,14 +314,14 @@ END_FUN
 /************************************************************************/
 /*                         Kompas                                       */
 /************************************************************************/
-E2FDBHELPER_API int  kompas_start(int* major, int* minor)
+E2FDBHELPER_API int kompas_start(int* major, int* minor)
 {
-  return 0;
+  return KompasApp::CreateNew(major, minor);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API bool kompas_stop(int kompas)
 {
-  return 0;
+  return KompasApp::Close(kompas);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API bool kompas_m3d(int kompas, const char* m3dFile, bool isEngSys, char** crc, char** icon)

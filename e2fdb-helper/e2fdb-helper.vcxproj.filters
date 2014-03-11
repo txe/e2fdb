@@ -60,6 +60,9 @@
     <ClInclude Include="ByteData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="KompasApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -129,6 +132,9 @@
       <Filter>ibpp</Filter>
     </ClCompile>
     <ClCompile Include="ByteData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="KompasApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

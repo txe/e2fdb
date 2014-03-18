@@ -146,7 +146,7 @@ private:
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
         models[temp._model] = 0;
-    _fileStorage.RunJob(models);
+    _fileStorage.RunTask(models);
   }
   /++++++++++++++++++++++++++++/
   void WritePacketAndFolderTree(FdbPacket fdbPacket)
@@ -231,7 +231,7 @@ private:
   /++++++++++++++++++++++++++++/
   void WriteFiles(FdbPacket fdbPacket)
   {
-    _fileStorage.WaitJob;
+    _fileStorage.WaitTask;
 
     FdbStatement stModel = GetStatement();
     stModel.Prepare("INSERT INTO MODEL (MODEL, THUMBNAIL, DIGEST, MODEL_VERSION) VALUES( ?, ?, ?, ? ) RETURNING ID");
@@ -241,7 +241,7 @@ private:
         if (temp._model.length == 0)
           continue;
         
-        MODEL_INFO model = _fileStorage.GetModel(temp._model);
+        file_info model = _fileStorage.GetModel(temp._model);
 
 /+        bool val = to!string(temp._model).exists;
         MD5 md5;

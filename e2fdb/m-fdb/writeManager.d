@@ -42,7 +42,7 @@ public:
 
     write("\nprepare fdb ... ");
     string thisDir = std.file.thisExePath.dirName;
-    std.file.copy(thisDir ~ "/blank.fdb", thisDir ~ "/breeze.fdb");
+    std.file.copy(thisDir ~ "/blank.breeze.fdb", thisDir ~ "/breeze.fdb");
     write("ok");
 
     write("\nconnect fdb ... ");

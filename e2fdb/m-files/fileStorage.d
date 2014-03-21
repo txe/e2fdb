@@ -4,6 +4,9 @@ private import helper.kompas;
 private import core.thread;
 private import utils;
 private import std.string;
+private import std.file;
+private import std.path;
+private import std.conv;
 
 
 struct file_info
@@ -35,9 +38,17 @@ class FileStorage
     write("\ninit cache ... " );
     stdout.flush();
 
-    int kompas = _dll.kompas_cache_init("", 15, 0);
-    if (kompas < 10)
-      throw new Exception("FileStorage: не смогли запустить Компас");
+    // если файла кэша нет то создадим новый
+    string thisDir = std.file.thisExePath.dirName;
+    if (!exists(thisDir ~ "/breeze.fdb"))
+      std.file.copy(thisDir ~ "/blank.breeze.fdb", thisDir ~ "/breeze.fdb");
+    
+    int kompas = _dll.kompas_cache_init((thisDir ~ "/breeze.fdb").toStringz, 15, 0);
+    if (kompas == 0)
+    {
+      string err = to!string(_dll.kompas_cache_error());
+      throw new Exception("FileStorage: " ~ err);
+    }
 
     write("ok");
     stdout.flush();
@@ -47,19 +58,19 @@ class FileStorage
   // останавливает работу стореджа
   void Stop()
   {
-    _dll.kompas_cache_stop(_cacheId);
+    //_dll.kompas_cache_stop(_cacheId);
   }
   /+++++++++++++++++++++++++++/
   // запускает обработку файлов
   void RunTask(int[wstring] modelPaths)
   {
-    _thread = new FileThread(modelPaths, _dll, _cacheId);
-    _thread.start();
+   // _thread = new FileThread(modelPaths, _dll, _cacheId);
+   // _thread.start();
   }
   /+++++++++++++++++++++++++++/
   void WaitTask()
   {
-    _thread.join;
+    //_thread.join;
   }
   /+++++++++++++++++++++++++++/
   file_info GetModel(wstring modelPath)

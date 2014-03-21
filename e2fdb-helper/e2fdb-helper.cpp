@@ -7,7 +7,7 @@
 #include "ibpp/ibpp.h"
 #include "ByteData.h"
 #include "aux_ext.h"
-#include "KompasApp.h"
+#include "CacheApp.h"
 
 
 #define BEGIN_FUN try {
@@ -316,20 +316,25 @@ END_FUN
 /************************************************************************/
 E2FDBHELPER_API int kompas_cache_init(const char* cacheDb, int majorVer, int minorVer)
 {
-  return KompasApp::CreateNew(cacheDb, majorVer, minorVer);
+  return CacheApp::_CreateNew(cacheDb, majorVer, minorVer);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API void kompas_cache_stop(int cache)
 {
-  KompasApp::Close(cache);
+  CacheApp::_Close(cache);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API void kompas_cache_clear_temp(int cache)
 {
-
+  CacheApp::_ClearCache(cache);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
 {
-  return false;
+  return CacheApp::_CacheFile(cache, digest, fromFile, isEngSys, data, dataLen, crc, crcLen, icon, iconLen);
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API const char* kompas_cache_error()
+{
+  return CacheApp::_ErrorMessage();
 }

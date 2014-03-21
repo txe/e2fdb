@@ -12,14 +12,15 @@ private extern(Windows) int MultiByteToWideChar(uint, int, char*, int, wchar*, i
 private extern(Windows) int WideCharToMultiByte(uint, int, immutable(wchar)*, int, char*, int, int, int); 
 
 /++++++++++++++++++++++++++++/
-wstring getMD5(wstring filePath)
+string getMD5(wstring filePath)
 {
   MD5 md5;
   md5.start();
   auto bytes = cast(ubyte[]) read(to!string(filePath));
   md5.put(bytes);
   ubyte[16] digest = md5.finish;
-  return cast(wstring)digest.toHexString;
+  char[] str = digest.toHexString;
+  return to!string(str);
 }
 /++++++++++++++++++++++++++++/
 wstring toUtf(char[] s, uint codePage)

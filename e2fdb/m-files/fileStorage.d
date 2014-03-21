@@ -12,14 +12,14 @@ private import std.conv;
 struct file_info
 {
   wstring filePath;
-  wstring digest;
+  string  digest;
   char*   data;
   int     dataLen;
   char*   icon;
   int     iconLen;
   char*   crc;
   int     crcLen;
-  this(wstring _filePath, wstring _digest) { filePath = _filePath; digest = _digest; dataLen = 0; iconLen = 0; crcLen = 0; }
+  this(wstring _filePath, string _digest) { filePath = _filePath; digest = _digest; dataLen = 0; iconLen = 0; crcLen = 0; }
 }
 
 /++++++++++++++++++++++++++++++++++++++++/
@@ -35,16 +35,16 @@ class FileStorage
   void Init()
   {
     _dll.Load;
-    write("\ninit cache ... " );
+    write("\nconnect to cache/kompas ... " );
     stdout.flush();
 
     // если файла кэша нет то создадим новый
     string thisDir = std.file.thisExePath.dirName;
-    if (!exists(thisDir ~ "/breeze.fdb"))
-      std.file.copy(thisDir ~ "/blank.breeze.fdb", thisDir ~ "/breeze.fdb");
+    if (!exists(thisDir ~ "/cache.fdb"))
+      std.file.copy(thisDir ~ "/blank.cache.fdb", thisDir ~ "/cache.fdb");
     
-    int kompas = _dll.kompas_cache_init((thisDir ~ "/breeze.fdb").toStringz, 15, 0);
-    if (kompas == 0)
+    _cacheId = _dll.kompas_cache_init((thisDir ~ "/cache.fdb").toStringz, 15, 0);
+    if (_cacheId == 0)
     {
       string err = to!string(_dll.kompas_cache_error());
       throw new Exception("FileStorage: " ~ err);
@@ -58,19 +58,20 @@ class FileStorage
   // останавливает работу стореджа
   void Stop()
   {
-    //_dll.kompas_cache_stop(_cacheId);
+    _dll.kompas_cache_stop(_cacheId);
   }
   /+++++++++++++++++++++++++++/
   // запускает обработку файлов
   void RunTask(int[wstring] modelPaths)
   {
-   // _thread = new FileThread(modelPaths, _dll, _cacheId);
-   // _thread.start();
+    _thread = new FileThread(modelPaths, _dll, _cacheId);
+    _thread.run();
+    //_thread.start();
   }
   /+++++++++++++++++++++++++++/
   void WaitTask()
   {
-    //_thread.join;
+   // _thread.join;
   }
   /+++++++++++++++++++++++++++/
   file_info GetModel(wstring modelPath)
@@ -82,8 +83,8 @@ class FileStorage
 class FileThread : Thread
 {
 private:
-  wstring[wstring]   _modelHashByPath; // список хешей моделей по пути
-  file_info[wstring] _fileInfoByHash;  // модели, которые запустили в работу
+  string[wstring]   _modelHashByPath; // список хешей моделей по пути
+  file_info[string] _fileInfoByHash;  // модели, которые запустили в работу
 
   int[wstring] _modelPaths;
   kompasDll    _dll;
@@ -101,14 +102,14 @@ public:
 
   file_info GetResult(wstring filePath)
   {
-    wstring digest = _modelHashByPath[filePath.toLower];
+    string digest = _modelHashByPath[filePath.toLower];
     return _fileInfoByHash[digest];
   }
 
 private:
   void run()
   {
-    _dll.kompas_cache_clear_temp(_cacheId);    
+    _dll.kompas_cache_clear_temp(_cacheId);
     
     // разберем сколько моделей надо обработать
     foreach (modelPath, num; _modelPaths)
@@ -117,7 +118,7 @@ private:
         modelPath = modelPath.toLower;
         if (!(modelPath in _modelHashByPath)) // если такой путь не обрабатывали, то отметим его обработанным
         {
-          wstring digest = getMD5(modelPath);
+          string digest = getMD5(modelPath);
           _modelHashByPath[modelPath] = digest;
 
           // добавим его в список на обработку если такого хэша еще там не было
@@ -129,7 +130,7 @@ private:
     // получим данные для файлов
     foreach (digest, fileInfo; _fileInfoByHash)
     {
-      _dll.kompas_cache_file_info(_cacheId, toAnsii(fileInfo.digest, 1251).toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen);
+      _dll.kompas_cache_file_info(_cacheId, fileInfo.digest.toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen);
     }
   }
 }

@@ -316,12 +316,12 @@ END_FUN
 /************************************************************************/
 E2FDBHELPER_API int kompas_cache_init(const char* cacheDb, int majorVer, int minorVer)
 {
-  return CacheApp::_CreateNew(cacheDb, majorVer, minorVer);
+  return CacheApp::_NewInstance(cacheDb, majorVer, minorVer);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API void kompas_cache_stop(int cache)
 {
-  CacheApp::_Close(cache);
+  CacheApp::_DeleteInstance(cache);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API void kompas_cache_clear_temp(int cache)

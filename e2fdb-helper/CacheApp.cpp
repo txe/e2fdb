@@ -9,13 +9,14 @@
 #include "ByteData.h"
 #include "_io.h"
 #include "aux_ext.h"
+#include <list>
 
 
 //-------------------------------------------------------------------------
 struct FILE_INFO
 {
-  ByteData*   data;
-  ByteData*   icon;
+  ByteData    data;
+  ByteData    icon;
   std::string crc;
 };
 //-------------------------------------------------------------------------
@@ -32,6 +33,8 @@ struct CACHE_INFO
 
   std::wstring      tempM3D;
   std::wstring      tempFrw;
+ 
+  std::list<FILE_INFO*> infoList;
 };
 //-------------------------------------------------------------------------
 void FillRef(FILE_INFO& fileInfo, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen);
@@ -49,7 +52,7 @@ const char* CacheApp::_ErrorMessage()
   return glb_error.c_str();
 }
 //-------------------------------------------------------------------------
-int CacheApp::_CreateNew(const char* cacheDb, int majorVer, int minorVer)
+int CacheApp::_NewInstance(const char* cacheDb, int majorVer, int minorVer)
 {
   // проверим подсоединение базы
   IBPP::Database base = IBPP::DatabaseFactory("", cacheDb, "sysdba", "masterkey");
@@ -85,13 +88,14 @@ int CacheApp::_CreateNew(const char* cacheDb, int majorVer, int minorVer)
     st->Execute();
   }
 
+
   IBPP::Blob dataBlob = IBPP::BlobFactory(base, trans);
   IBPP::Blob iconBlob = IBPP::BlobFactory(base, trans);
   // подготовим нужные запросы к базе
   IBPP::Statement findSt = StatementFactory(base, trans);
   findSt->Prepare("SELECT data, icon, crc FROM files WHERE digest = ?");
   IBPP::Statement addSt = StatementFactory(base, trans);
-  addSt->Prepare("INSERT INFO files (digest, data, icon, crc) VALUES(?, ?, ?, ?)");
+  addSt->Prepare("INSERT INTO files (digest, data, icon, crc) VALUES(?, ?, ?, ?)");
   
 
   // запустим компас
@@ -118,10 +122,16 @@ int CacheApp::_CreateNew(const char* cacheDb, int majorVer, int minorVer)
   cache->dataBlob  = dataBlob;
   cache->iconBlob  = iconBlob;
 
+  std::wstring temp = io::dir::temp_dir(L"_fdb_converter");
+  if (!io::dir::exist(temp))
+    io::dir::create(temp);
+
+  cache->tempM3D = io::file::temp_name(temp, L"_x_", L".m3d");
+
   return (int)cache;
 }
 //-------------------------------------------------------------------------
-bool CacheApp::_Close(int c)
+bool CacheApp::_DeleteInstance(int c)
 {
   CACHE_INFO* cache = (CACHE_INFO*)c;
   if (cache && cache->kompas5)
@@ -140,29 +150,32 @@ bool CacheApp::_CacheFile(int c, const char* digest, const char* fromFile, bool 
 {
   CACHE_INFO* cache = (CACHE_INFO*)c;
   
-  FILE_INFO fileInfo;
-  if (FindFileInCache(cache, digest, fileInfo))
+  FILE_INFO* fileInfo = new FILE_INFO();
+  if (FindFileInCache(cache, digest, *fileInfo))
   {
-    FillRef(fileInfo, data, dataLen, crc, crcLen, icon, iconLen);
+    cache->infoList.push_back(fileInfo);
+    FillRef(*fileInfo, data, dataLen, crc, crcLen, icon, iconLen);
     return true;
   }
 
-  if (PrepareFile(cache, fromFile, isEngSys, fileInfo))
+  if (PrepareFile(cache, fromFile, isEngSys, *fileInfo))
   {
-    WriteFileInCache(cache, digest, fileInfo);
-    FillRef(fileInfo, data, dataLen, crc, crcLen, icon, iconLen);
+    cache->infoList.push_back(fileInfo);
+    WriteFileInCache(cache, digest, *fileInfo);
+    FillRef(*fileInfo, data, dataLen, crc, crcLen, icon, iconLen);
     return true;
   }
 
+  delete fileInfo;
   return false;
 }
 //-------------------------------------------------------------------------
 void FillRef(FILE_INFO& fileInfo, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
 {
-  *data    = (char*)fileInfo.data->GetData();
-  *dataLen = fileInfo.data->GetLength();
-  *icon    = (char*)fileInfo.icon->GetData();
-  *iconLen = fileInfo.icon->GetLength();
+  *data    = (char*)fileInfo.data.GetData();
+  *dataLen = fileInfo.data.GetLength();
+  *icon    = (char*)fileInfo.icon.GetData();
+  *iconLen = fileInfo.icon.GetLength();
   *crc     = (char*)fileInfo.crc.c_str();
   *crcLen  = fileInfo.crc.size();
 }
@@ -175,9 +188,9 @@ bool FindFileInCache(CACHE_INFO* cache, const char* digest, FILE_INFO& fileInfo)
     return false;
 
   cache->findSt->Get(1, cache->dataBlob);
-  fileInfo.data->LoadFromBlob(cache->dataBlob);
+  fileInfo.data.LoadFromBlob(cache->dataBlob);
   cache->findSt->Get(2, cache->iconBlob);
-  fileInfo.icon->LoadFromBlob(cache->iconBlob);
+  fileInfo.icon.LoadFromBlob(cache->iconBlob);
   cache->findSt->Get(3, fileInfo.crc);
 
   return true;
@@ -186,9 +199,9 @@ bool FindFileInCache(CACHE_INFO* cache, const char* digest, FILE_INFO& fileInfo)
 void WriteFileInCache(CACHE_INFO* cache, const std::string& digest, FILE_INFO& fileInfo)
 {
   cache->addSt->Set(1, digest);
-  fileInfo.data->SaveToBlob(cache->dataBlob);
+  fileInfo.data.SaveToBlob(cache->dataBlob);
   cache->addSt->Set(2, cache->dataBlob);
-  fileInfo.icon->SaveToBlob(cache->iconBlob);
+  fileInfo.icon.SaveToBlob(cache->iconBlob);
   cache->addSt->Set(3, cache->iconBlob);
   cache->addSt->Set(4, fileInfo.crc);
 
@@ -197,7 +210,7 @@ void WriteFileInCache(CACHE_INFO* cache, const std::string& digest, FILE_INFO& f
 //-------------------------------------------------------------------------
 bool PrepareFile(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo)
 {
-  bool isFrw = fromFile.find("|", 0) >= 0;
+  bool isFrw = fromFile.find("lfr", 0) != std::string::npos;
   if (isFrw)
     return PrepareFrw(cache, fromFile, isEngSys, fileInfo);
   else
@@ -231,6 +244,10 @@ bool PrepareM3D(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, F
 
   doc->Save();
   doc->close();
+
+  fileInfo.data.LoadFromFile(cache->tempM3D);
+  fileInfo.data.Compress();
+
 
   return true;
 }

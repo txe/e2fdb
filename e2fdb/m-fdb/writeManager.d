@@ -40,12 +40,12 @@ public:
   {
     writeln;
 
-    write("\nprepare fdb ... ");
+    write("\nrecreate breeze.fdb ... ");
     string thisDir = std.file.thisExePath.dirName;
     std.file.copy(thisDir ~ "/blank.breeze.fdb", thisDir ~ "/breeze.fdb");
     write("ok");
 
-    write("\nconnect fdb ... ");
+    write("\nconnect to breeze.fdb ... ");
     if (!_provider.Connect(thisDir ~ "\\breeze.fdb", "sysdba", "masterkey"))
     {
       write("error, can't create connect");
@@ -241,7 +241,7 @@ private:
         if (temp._model.length == 0)
           continue;
         
-        file_info model = _fileStorage.GetModel(temp._model);
+      //  file_info model = _fileStorage.GetModel(temp._model);
 
 /+        bool val = to!string(temp._model).exists;
         MD5 md5;

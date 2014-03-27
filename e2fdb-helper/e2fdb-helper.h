@@ -37,6 +37,8 @@ E2FDBHELPER_API bool fdb_statement_set_double(int st, int index, const double* v
 E2FDBHELPER_API bool fdb_statement_set_string(int st, int index, const char* value);
 E2FDBHELPER_API bool fdb_statement_set_blob_as_string(int st, int index, const char* value);
 E2FDBHELPER_API bool fdb_statement_set_blob_as_file(int st, int index, const char* filePath);
+E2FDBHELPER_API bool fdb_statement_set_blob_as_data(int st, int index, char* data, int dataLen);
+
 
 E2FDBHELPER_API bool fdb_statement_get_is_null(int st, int index);
 E2FDBHELPER_API bool fdb_statement_get_int(int st, int index, int* value);

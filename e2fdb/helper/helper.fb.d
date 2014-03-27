@@ -28,6 +28,7 @@ alias extern(Windows) bool function(int st, int index, const double* value) fdb_
 alias extern(Windows) bool function(int st, int index, const char* value) fdb_statement_set_string_fp;
 alias extern(Windows) bool function(int st, int index, const char* value) fdb_statement_set_blob_as_string_fp;
 alias extern(Windows) bool function(int st, int index, const char* filePath) fdb_statement_set_blob_as_file_fp;
+alias extern(Windows) bool function(int st, int index, char* data, int dataLen) fdb_statement_set_blob_as_data_fp;
 
 alias extern(Windows) bool function(int st, int index) fdb_statement_get_is_null_fp;
 alias extern(Windows) bool function(int st, int index, int* value) fdb_statement_get_int_fp;
@@ -65,6 +66,7 @@ public:
   fdb_statement_set_string_fp fdb_statement_set_string;
   fdb_statement_set_blob_as_string_fp fdb_statement_set_blob_as_string;
   fdb_statement_set_blob_as_file_fp fdb_statement_set_blob_as_file;
+  fdb_statement_set_blob_as_data_fp fdb_statement_set_blob_as_data;
 
   fdb_statement_get_is_null_fp fdb_statement_get_is_null;
   fdb_statement_get_int_fp fdb_statement_get_int;
@@ -126,6 +128,8 @@ public:
     if (fdb_statement_set_blob_as_string == null) throw new Exception("fdb_statement_set_blob_as_string == null");
     fdb_statement_set_blob_as_file = cast(fdb_statement_set_blob_as_file_fp) GetProcAddress(_module, "fdb_statement_set_blob_as_file");
     if (fdb_statement_set_blob_as_file == null) throw new Exception("fdb_statement_set_blob_as_file == null");
+    fdb_statement_set_blob_as_data = cast(fdb_statement_set_blob_as_data_fp) GetProcAddress(_module, "fdb_statement_set_blob_as_data");
+    if (fdb_statement_set_blob_as_data == null) throw new Exception("fdb_statement_set_blob_as_data == null");
 
     fdb_statement_get_is_null = cast(fdb_statement_get_is_null_fp) GetProcAddress(_module, "fdb_statement_get_is_null");
     if (fdb_statement_get_is_null == null) throw new Exception("fdb_statement_get_is_null == null");

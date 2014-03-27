@@ -27,6 +27,7 @@ private:
   int[wstring] _cache_atr_name;
   int[wstring] _cache_atr_desc;
   int          _repId;
+  int[string]  _cache_modelId_byHash;
 
 public:
   ~this()
@@ -246,27 +247,29 @@ private:
   {
     _fileStorage.WaitTask;
 
-    FdbStatement stModel = GetStatement();
-    stModel.Prepare("INSERT INTO MODEL (MODEL, THUMBNAIL, DIGEST, MODEL_VERSION) VALUES( ?, ?, ?, ? ) RETURNING ID");
+    FdbStatement stAddModel = GetStatement();
+    stAddModel.Prepare("INSERT INTO MODEL (MODEL, THUMBNAIL, DIGEST, MODEL_VERSION) VALUES( ?, ?, ?, ? ) RETURNING ID");
+    FdbStatement stSetModel = GetStatement();
+    stSetModel.Prepare("UPDATE OBJECT set MODELID = ? WHERE ID = ?");
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
       {
         if (temp._model.length == 0)
           continue;
         
-      //  file_info model = _fileStorage.GetModel(temp._model);
+        file_info model = _fileStorage.GetModel(temp._model);
+        if (int* findModelId = model.digest in _cache_modelId_byHash)
+        {
+          stSetModel.Set(1, *findModelId).Set(2, temp._rId).Execute();
+        }
+        else
+        {
+          stAddModel.SetBlobAsData(1, model.data, model.dataLen).SetBlobAsData(2, model.icon, model.iconLen).Set(3, model.digest).Set(4, 2);
+          int modelId = stAddModel.Execute.GetInt(1);
+          _cache_modelId_byHash[model.digest] = modelId;
 
-/+        bool val = to!string(temp._model).exists;
-        MD5 md5;
-        md5.start();
-        auto bytes = cast(ubyte[])read(to!string(temp._model));
-        md5.put(bytes);
-        string digest = toHexString(md5.finish);
-
-        stModel.SetBlobAsFile(1, temp._model).SetBlobAsString(2, "12").Set(3, digest).Set(4, 2);
-        int modelId = stModel.Execute.GetInt(1);
-        models[temp._model] = modelId;
-        +/
+          stSetModel.Set(1, modelId).Set(2, temp._rId).Execute();
+        }
       }
   }
 }

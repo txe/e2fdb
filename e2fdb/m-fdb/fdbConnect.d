@@ -146,7 +146,12 @@ struct FdbStatement
   ref FdbStatement SetBlobAsFile(int index, wstring fileName)
   {
     auto val2 = toAnsii(fileName, 1251);
-    _connect._dll.fdb_statement_set_blob_as_string(_st, index, val2.toStringz);
+    _connect._dll.fdb_statement_set_blob_as_file(_st, index, val2.toStringz);
+    return this;
+  }
+  ref FdbStatement SetBlobAsData(int index, char* data, int dataLen)
+  {
+    _connect._dll.fdb_statement_set_blob_as_data(_st, index, data, dataLen);
     return this;
   }
 

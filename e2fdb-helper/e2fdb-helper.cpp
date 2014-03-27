@@ -269,6 +269,24 @@ BEGIN_FUN
 END_FUN
 }
 //-------------------------------------------------------------------------
+E2FDBHELPER_API bool fdb_statement_set_blob_as_data(int st, int index, char* data, int dataLen)
+{
+BEGIN_FUN
+  if (!st)
+    return false;
+
+  IBPP::Statement _st = (IBPP::IStatement*)st;
+  IBPP::Blob blob = IBPP::BlobFactory(_st->DatabasePtr(), _st->TransactionPtr());
+
+  ByteData byteData;
+  byteData.Attach(data, dataLen);
+  byteData.SaveToBlob(blob);
+  _st->Set(index, blob);
+
+  return true;
+END_FUN
+}
+//-------------------------------------------------------------------------
 E2FDBHELPER_API bool fdb_statement_get_is_null(int st, int index)
 {
 BEGIN_FUN

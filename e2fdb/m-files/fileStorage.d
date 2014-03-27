@@ -8,8 +8,7 @@ private import std.file;
 private import std.path;
 private import std.conv;
 
-
-struct file_info
+class file_info
 {
   wstring filePath;
   string  digest;
@@ -132,7 +131,7 @@ private:
 
           // добавим его в список на обработку если такого хэша еще там не было
           if (!(digest in _fileInfoByHash))
-            _fileInfoByHash[digest] = file_info(modelPath, digest);
+            _fileInfoByHash[digest] = new file_info(modelPath, digest);
         }
       }
 

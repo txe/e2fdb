@@ -47,6 +47,6 @@ E2FDBHELPER_API bool fdb_statement_get_string(int st, int index, char* value);
 E2FDBHELPER_API int  kompas_cache_init(const char* cacheDb, int majorVer, int minorVer);
 E2FDBHELPER_API void kompas_cache_stop(int cache);
 E2FDBHELPER_API void kompas_cache_clear_temp(int cache);
-E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen);
+E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen, bool* isFromCache);
 E2FDBHELPER_API const char* kompas_cache_error();
 

@@ -153,17 +153,22 @@ bool CacheApp::_DeleteInstance(int c)
 void CacheApp::_ClearCache(int c)
 {
   CACHE_INFO* cache = (CACHE_INFO*)c;
+  for (auto it = cache->infoList.begin(); it != cache->infoList.end(); ++it)
+    delete *it;
+  cache->infoList.clear();
 }
 //-------------------------------------------------------------------------
-bool CacheApp::_CacheFile(int c, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
+bool CacheApp::_CacheFile(int c, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen, bool* isFromCache)
 {
   CACHE_INFO* cache = (CACHE_INFO*)c;
-  
+  *isFromCache = false;
+
   FILE_INFO* fileInfo = new FILE_INFO();
   if (FindFileInCache(cache, digest, *fileInfo))
   {
     cache->infoList.push_back(fileInfo);
     FillRef(*fileInfo, data, dataLen, crc, crcLen, icon, iconLen);
+    *isFromCache = true;
     return true;
   }
 

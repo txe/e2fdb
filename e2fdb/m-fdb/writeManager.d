@@ -96,8 +96,9 @@ public:
       writeln(p);
 
     writeln("\nlap time: ", sw.peek.seconds, " sec.");
+    writeln("cache hit: ", _fileStorage._cacheHit, "/", _fileStorage._unicFileCount);
     
-    write("commiting base ... ");
+    write("\ncommiting base ... ");
     stdout.flush();
     _trans.Commit();
     write("ok\n");

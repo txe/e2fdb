@@ -329,9 +329,9 @@ E2FDBHELPER_API void kompas_cache_clear_temp(int cache)
   CacheApp::_ClearCache(cache);
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
+E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen, bool* isFromCache)
 {
-  return CacheApp::_CacheFile(cache, digest, fromFile, isEngSys, data, dataLen, crc, crcLen, icon, iconLen);
+  return CacheApp::_CacheFile(cache, digest, fromFile, isEngSys, data, dataLen, crc, crcLen, icon, iconLen, isFromCache);
 }
 //-------------------------------------------------------------------------
 E2FDBHELPER_API const char* kompas_cache_error()

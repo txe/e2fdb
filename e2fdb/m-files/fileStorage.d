@@ -30,6 +30,9 @@ class FileStorage
   FileThread  _thread;
   file_info[] _fileInfo;
 
+  public int _unicFileCount = 0;
+  public int _cacheHit = 0;
+
   /++++++++++++++++++++++++++/
   // инициализируем работу стореджа
   void Init()
@@ -65,7 +68,7 @@ class FileStorage
   // запускает обработку файлов
   void RunTask(int[wstring] modelPaths)
   {
-    _thread = new FileThread(modelPaths, _dll, _cacheId);
+    _thread = new FileThread(modelPaths, _dll, _cacheId, &_unicFileCount, &_cacheHit);
     _thread.run();
     //_thread.start();
   }
@@ -91,14 +94,19 @@ private:
   kompasDll    _dll;
   int          _cacheId;
 
+  int*         _unicFileCount;
+  int*         _cacheHit;
+
 public:
 
-  this(int[wstring] modelPaths, kompasDll dll, int cacheId)
+  this(int[wstring] modelPaths, kompasDll dll, int cacheId, int* unicFileCount, int* cacheHit)
   {
     super(&run);
     _modelPaths = modelPaths;
     _dll = dll;
     _cacheId = cacheId;
+    _unicFileCount = unicFileCount;
+    _cacheHit = cacheHit;
   }
 
   file_info GetResult(wstring filePath)
@@ -130,6 +138,13 @@ private:
 
     // получим данные для файлов
     foreach (fileInfo; _fileInfoByHash.byValue)
-      _dll.kompas_cache_file_info(_cacheId, fileInfo.digest.toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen);
+    {
+      bool isFromCache = false;
+      _dll.kompas_cache_file_info(_cacheId, fileInfo.digest.toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen, &isFromCache);
+      
+      *_unicFileCount += 1;
+      if (isFromCache)
+        *_cacheHit += 1;
+    }
   }
 }

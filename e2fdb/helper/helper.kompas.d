@@ -4,7 +4,7 @@ import std.c.windows.windows;
 alias extern(Windows) int  function(const char* cacheDb, int majorVer, int minorVer) kompas_cache_init_fp;
 alias extern(Windows) void function(int cache) kompas_cache_stop_fp;
 alias extern(Windows) void function(int cache) kompas_cache_clear_temp_fp;
-alias extern(Windows) bool function(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen) kompas_cache_file_info_fp;
+alias extern(Windows) bool function(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen, bool* isFromCache) kompas_cache_file_info_fp;
 alias extern(Windows) const(char*) function() kompas_cache_error_fp;
 
 struct kompasDll

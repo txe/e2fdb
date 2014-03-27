@@ -9,6 +9,7 @@
 #include "ByteData.h"
 #include "_io.h"
 #include "aux_ext.h"
+#include "Thumb.h"
 #include <list>
 
 

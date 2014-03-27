@@ -4,4 +4,8 @@
     <LocalDebuggerCommand>C:\Users\Guryanov\Desktop\e2fdb\e2fdb\Debug\e2fdb.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LocalDebuggerCommand>C:\Users\Guryanov\Desktop\e2fdb\e2fdb\Release\e2fdb.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

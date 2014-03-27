@@ -32,7 +32,7 @@ struct CACHE_INFO
   IBPP::Blob        dataBlob;
   IBPP::Blob        iconBlob;
 
-  std::wstring      tempM3D;
+  std::wstring      tempDir;
   std::wstring      tempFrw;
  
   std::list<FILE_INFO*> infoList;
@@ -123,11 +123,9 @@ int CacheApp::_NewInstance(const char* cacheDb, int majorVer, int minorVer)
   cache->dataBlob  = dataBlob;
   cache->iconBlob  = iconBlob;
 
-  std::wstring temp = io::dir::temp_dir(L"_fdb_converter");
-  if (!io::dir::exist(temp))
-    io::dir::create(temp);
-
-  cache->tempM3D = io::file::temp_name(temp, L"_x_", L".m3d");
+  cache->tempDir = io::dir::temp_dir(L"_fdb_converter");
+  if (!io::dir::exist(cache->tempDir))
+    io::dir::create(cache->tempDir);
 
   return (int)cache;
 }
@@ -135,9 +133,19 @@ int CacheApp::_NewInstance(const char* cacheDb, int majorVer, int minorVer)
 bool CacheApp::_DeleteInstance(int c)
 {
   CACHE_INFO* cache = (CACHE_INFO*)c;
-  if (cache && cache->kompas5)
-    cache->kompas5->Quit();
+  if (cache)
+  {
+    if (cache->kompas5)
+      cache->kompas5->Quit();
 
+    if (cache->db->Connected())
+    {
+      cache->trans->Commit();
+      cache->db->Disconnect();
+    }
+  }
+
+  // TODO: сохранить кэш
   delete cache;
   return true;
 }
@@ -225,12 +233,18 @@ bool PrepareFrw(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, F
 //-------------------------------------------------------------------------
 bool PrepareM3D(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo)
 {
-  io::file::remove(cache->tempM3D);
-  io::file::copy(aux::_a2w(fromFile), cache->tempM3D);
+  std::wstring tempM3d = cache->tempDir + L"model.m3d";
+
+  io::file::remove(tempM3d);
+  io::file::copy(aux::_a2w(fromFile), tempM3d);
 
   API5::ksDocument3DPtr doc = cache->kompas5->Document3D();
-  if (0 == doc->Open(cache->tempM3D.c_str(), VARIANT_TRUE))
+  if (0 == doc->Open(tempM3d.c_str(), VARIANT_TRUE))
+  {
+    doc->close();
+    glb_error = "не смогли открыть модель: " + fromFile;
     return false;
+  }
 
   // посчитаем crc
   //API7::ICheckSumPtr crc = cache->kompas5->CheckSum;
@@ -246,9 +260,23 @@ bool PrepareM3D(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, F
   doc->Save();
   doc->close();
 
-  fileInfo.data.LoadFromFile(cache->tempM3D);
+  fileInfo.data.LoadFromFile(tempM3d);
   fileInfo.data.Compress();
 
+  // создадим icon
+  int pngSize = isEngSys ? 128 : 64;
 
+  std::wstring pngFile = cache->tempDir + L"model.png";
+  io::file::remove(pngFile);
+
+  if (!thumb::ExtractThumbnail(cache->tempDir, L"model.m3d", L"model.png", pngSize))
+  {
+    glb_error = "не смогли создать иконку с модели: " + fromFile;
+    return false;
+  }
+
+  fileInfo.icon.LoadFromFile(pngFile);
+  fileInfo.icon.Compress();
+  
   return true;
 }

@@ -46,7 +46,7 @@ class FileStorage
     _cacheId = _dll.kompas_cache_init((thisDir ~ "/cache.fdb").toStringz, 15, 0);
     if (_cacheId == 0)
     {
-      string err = to!string(_dll.kompas_cache_error());
+      auto err = to!string(_dll.kompas_cache_error());
       throw new Exception("FileStorage: " ~ err);
     }
 
@@ -59,6 +59,7 @@ class FileStorage
   void Stop()
   {
     _dll.kompas_cache_stop(_cacheId);
+    _cacheId = 0;
   }
   /+++++++++++++++++++++++++++/
   // запускает обработку файлов
@@ -128,9 +129,7 @@ private:
       }
 
     // получим данные для файлов
-    foreach (digest, fileInfo; _fileInfoByHash)
-    {
+    foreach (fileInfo; _fileInfoByHash.byValue)
       _dll.kompas_cache_file_info(_cacheId, fileInfo.digest.toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen);
-    }
   }
 }

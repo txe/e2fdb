@@ -34,13 +34,15 @@ public:
     _trans.Commit();
     _trans.Close();
     _provider.Disconnect();
+
+    _fileStorage.Stop;
   }
   /++++++++++++++++++++++++++++/
   void Run(string[] edbFiles)
   {
     writeln;
 
-    write("\nrecreate breeze.fdb ... ");
+    write("\ncreate breeze.fdb ... ");
     string thisDir = std.file.thisExePath.dirName;
     std.file.copy(thisDir ~ "/blank.breeze.fdb", thisDir ~ "/breeze.fdb");
     write("ok");
@@ -69,7 +71,7 @@ public:
     string[] problems;
     foreach (index, file; edbFiles)
     {
-      write("\rwrite: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): ", problems.length);
+      write("\rwriting: " ~ to!string(index + 1) ~ " of " ~ to!string(edbFiles.length) ~ " packet(s), problem(s): ", problems.length);
       stdout.flush();
       
       try
@@ -93,9 +95,19 @@ public:
     foreach (p; problems)
       writeln(p);
 
-    writeln("lap time: ", sw.peek.seconds, " sec.");
-
+    writeln("\nlap time: ", sw.peek.seconds, " sec.");
+    
+    write("commiting base ... ");
+    stdout.flush();
     _trans.Commit();
+    write("ok\n");
+    
+
+    write("commiting cache/closing kompas ... ");
+    stdout.flush();
+    _fileStorage.Stop;
+    write("ok\n");
+    stdout.flush();
   }
 
 private:

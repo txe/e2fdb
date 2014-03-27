@@ -5,9 +5,9 @@
 #include <atlimage.h>
 
 //-------------------------------------------------------------------------
-bool CThumb::ExtractThumbnail(const std::wstring & strDirectory, const std::wstring& strFileNameOnly, const std::wstring& strThumbnailFileNameOnly, int nSize)
+bool thumb::ExtractThumbnail(const std::wstring & strDirectory, const std::wstring& strFileNameOnly, const std::wstring& strThumbnailFileNameOnly, int nSize)
 {
-  HBITMAP Thumbnail = GetThumbnailHBitmap(strDirectory, strFileNameOnly, nSize);
+  HBITMAP Thumbnail = thumb::GetThumbnailHBitmap(strDirectory, strFileNameOnly, nSize);
   if (Thumbnail == 0)
     return false;
 
@@ -18,7 +18,7 @@ bool CThumb::ExtractThumbnail(const std::wstring & strDirectory, const std::wstr
   return true;
 }
 //-------------------------------------------------------------------------
-HBITMAP CThumb::GetThumbnailHBitmap(std::wstring strFolder, std::wstring strFileName, int nSize)
+HBITMAP thumb::GetThumbnailHBitmap(std::wstring strFolder, std::wstring strFileName, int nSize)
 {
   HBITMAP result(0);
 

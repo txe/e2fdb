@@ -5,9 +5,9 @@
 namespace KompasServer
 {
   int         _NewInstance(int index, int majorVer, int minorVer);
-  int         _File(int kompasServer, std::string fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo);
+  bool        _File(int kompasServer, std::string fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo);
   const char* _Message(int kompasServer);
-  int         _Clear(int kompasServer);
-  int         _Quit(int kompasServer);
+  bool        _Clear(int kompasServer);
+  bool        _Quit(int kompasServer);
 };
 

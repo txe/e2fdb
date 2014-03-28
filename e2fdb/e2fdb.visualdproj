@@ -194,12 +194,10 @@
    <File path="edb\edb.parser.d" />
    <File path="edb\edb.structure.d" />
   </Folder>
-  <Folder name="helper">
-   <File path="helper\helper.fb.d" />
-   <File path="helper\helper.kompas.d" />
-  </Folder>
-  <Folder name="m-console">
-   <File path="m-console\consoleWriter.d" />
+  <Folder name="dll">
+   <File path="dll\dll.cacheserver.d" />
+   <File path="dll\dll.fb.d" />
+   <File path="dll\dll.kompasserver.d" />
   </Folder>
   <Folder name="m-fdb">
    <File path="m-fdb\fdbConnect.d" />

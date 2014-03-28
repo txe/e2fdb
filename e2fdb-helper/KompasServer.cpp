@@ -80,7 +80,7 @@ int KompasServer::_NewInstance(int index, int majorVer, int minorVer)
   return (int)info;
 }
 //-------------------------------------------------------------------------
-int KompasServer::_File(int kompasServer, std::string fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo)
+bool KompasServer::_File(int kompasServer, std::string fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo)
 {
   kompas_server_info* info = (kompas_server_info*)kompasServer;
   kom_file* file = new kom_file;
@@ -111,7 +111,7 @@ const char*KompasServer::_Message(int kompasServer)
   return "kompasServer нулевой указатель";
 }
 //-------------------------------------------------------------------------
-int KompasServer::_Clear(int kompasServer)
+bool KompasServer::_Clear(int kompasServer)
 {
   if (kompas_server_info* info = (kompas_server_info*)kompasServer)
   {
@@ -123,7 +123,7 @@ int KompasServer::_Clear(int kompasServer)
   return false;
 }
 //-------------------------------------------------------------------------
-int KompasServer::_Quit(int kompasServer)
+bool KompasServer::_Quit(int kompasServer)
 {
   if (kompas_server_info* info = (kompas_server_info*)kompasServer)
   {

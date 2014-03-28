@@ -1,4 +1,4 @@
-module helper.fb;
+module dll.fb;
 import std.c.windows.windows;
 
 

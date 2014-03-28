@@ -3,7 +3,6 @@ module fdb.writeManager;
 private import edb.parser;
 private import std.path;
 private import files.fileStorage;
-private import console.consoleWriter;
 private import edb.structure;
 private import fdb.fdbConvert;
 private import fdb.fdbStructure;
@@ -18,7 +17,6 @@ private import std.file;
 class WriteManager
 {
 private:
-  ConsoleWriter  _console;
   FileStorage    _fileStorage = new FileStorage;
   FdbConnect     _provider = new FdbConnect;
   FdbTransaction _trans;
@@ -63,7 +61,6 @@ public:
     _trans.Start;
     write("ok");
     
-    _console.Init();
     _fileStorage.Init();
 
     StopWatch sw;
@@ -254,6 +251,7 @@ private:
   {
     _fileStorage.WaitTask;
 
+    return;
     FdbStatement stAddModel = GetStatement();
     stAddModel.Prepare("INSERT INTO MODEL (MODEL, THUMBNAIL, DIGEST, MODEL_VERSION) VALUES( ?, ?, ?, ? ) RETURNING ID");
     FdbStatement stSetModel = GetStatement();
@@ -264,8 +262,8 @@ private:
         if (temp._model.length == 0)
           continue;
         
-        file_info model = _fileStorage.GetModel(temp._model);
-        if (int* findModelId = model.digest in _cache_modelId_byHash)
+        file_info model;// = _fileStorage.GetModel(temp._model);
+    /+    if (int* findModelId = model.digest in _cache_modelId_byHash)
         {
           stSetModel.Set(1, *findModelId).Set(2, temp._rId).Execute();
         }
@@ -276,7 +274,7 @@ private:
           _cache_modelId_byHash[model.digest] = modelId;
 
           stSetModel.Set(1, modelId).Set(2, temp._rId).Execute();
-        }
+        }+/
       }
   }
 }

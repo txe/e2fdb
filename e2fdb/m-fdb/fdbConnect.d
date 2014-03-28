@@ -1,5 +1,5 @@
 module fdb.fdbConnect;
-private import helper.fb;
+private import dll.fb;
 private import std.conv;
 private import std.string;
 private import std.c.windows.windows;

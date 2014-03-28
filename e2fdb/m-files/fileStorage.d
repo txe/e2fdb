@@ -1,168 +1,234 @@
 module files.fileStorage;
 private import std.stdio;
-private import helper.kompas;
+private import dll.kompasserver;
+private import dll.cacheserver;
 private import core.thread;
 private import utils;
 private import std.string;
 private import std.file;
 private import std.path;
 private import std.conv;
+private import std.algorithm;
+private import std.array;
 
+//-----------------------------------------
+struct CACHE_FILE_INFO
+{
+  char*  fileDigest;
+  char*  dataDigest;
+  char*  param;
+
+  char*  data;
+  int    dataLen;
+  char*  icon;
+  int    iconLen;
+}
+//-----------------------------------------
 class file_info
 {
-  wstring filePath;
-  string  digest;
+  wstring longPath;
+  string  fileDigest;
+  string  dataDigest;
+  string  param;
+  bool    fromCache;
+
   char*   data;
   int     dataLen;
   char*   icon;
   int     iconLen;
-  char*   crc;
-  int     crcLen;
-  this(wstring _filePath, string _digest) { filePath = _filePath; digest = _digest; dataLen = 0; iconLen = 0; crcLen = 0; }
+  this(wstring _longPath, string _fileDigest) { longPath = _longPath; fileDigest = _fileDigest; dataLen = 0; iconLen = 0; fromCache = false;}
 }
 
-/++++++++++++++++++++++++++++++++++++++++/
+//-----------------------------------------
 class FileStorage
 {
-  kompasDll   _dll;
-  int         _cacheId;
-  FileThread  _thread;
-  file_info[] _fileInfo;
+  KompasServerDll _kompasDll;
+  CacheServerDll  _cacheDll;
+  int             _cacheId;
+  int[]           _kompasId;
+  FileThread      _mainThread;
+  
+  enum THREAD_COUNT = 4;
 
   public int _unicFileCount = 0;
   public int _cacheHit = 0;
+
+  private void throw_if_message(const(char*) message)
+  {
+    string err = to!string(message);
+    if (err.length != 0)
+    {
+      Stop;
+      auto err2 = toUtf(to!(char[])(err), 1251);
+      throw new Exception("FileStorage: " ~ to!string(err2));
+    }
+  }
+
 
   /++++++++++++++++++++++++++/
   // инициализируем работу стореджа
   void Init()
   {
-    _dll.Load;
-    write("\nconnect to cache/kompas ... " );
+    _kompasDll.Load;
+    _cacheDll.Load;
+
+    write("\nconnect to cache ... " );
     stdout.flush();
 
     // если файла кэша нет то создадим новый
     string thisDir = std.file.thisExePath.dirName;
     if (!exists(thisDir ~ "/cache.fdb"))
       std.file.copy(thisDir ~ "/blank.cache.fdb", thisDir ~ "/cache.fdb");
-    
-    _cacheId = _dll.kompas_cache_init((thisDir ~ "/cache.fdb").toStringz, 15, 0);
-    if (_cacheId == 0)
+    _cacheId = _cacheDll.cache_server_init((thisDir ~ "/cache.fdb").toStringz, 15, 0);
+    throw_if_message(_cacheDll.cache_server_message(_cacheId));
+    write("ok");
+
+    for (int i = 0; i < THREAD_COUNT; ++i)
     {
-      string err = to!string(_dll.kompas_cache_error());
-      auto err2 = toUtf(to!(char[])(err), 1251);
-      throw new Exception("FileStorage: " ~ to!string(err2));
+      write("\nconnect to kompas (", i,") ... ");
+      stdout.flush();
+
+      int kompasId = _kompasDll.kompas_server_init(i, 15, 0);
+      _kompasId ~= kompasId;
+      throw_if_message(_kompasDll.kompas_server_message(kompasId));
+      write("ok");
     }
 
-    write("ok");
     stdout.flush();
-
   }
   /+++++++++++++++++++++++++++/
   // останавливает работу стореджа
   void Stop()
   {
-    _dll.kompas_cache_stop(_cacheId);
+    _cacheDll.cache_server_quit(_cacheId);
     _cacheId = 0;
+    foreach(kompasId; _kompasId)
+      _kompasDll.kompas_server_quit(kompasId);
+    _kompasId.clear;
   }
   /+++++++++++++++++++++++++++/
   // запускает обработку файлов
   void RunTask(wstring[] filePaths)
   {
-    _thread = new FileThread(filePaths, _dll, _cacheId, &_unicFileCount, &_cacheHit);
-    _thread.run();
+    _mainThread = new FileThread(this, filePaths);
+    //_mainThread.run();
     // TODO start
-    //_thread.start();
+    _mainThread.start();
   }
   /+++++++++++++++++++++++++++/
   void WaitTask()
   {
     // TODO join
-    //_thread.join;
+    _mainThread.join;
   }
   /+++++++++++++++++++++++++++/
   file_info GetModel(wstring modelPath)
   {
-    return _thread.GetResult(modelPath);
+    return null;// _thread.GetResult(modelPath);
   }
 }
 
+//-----------------------------------------
 class FileThread : Thread
 {
 private:
-  string[wstring]   _modelHashByPath; // список хешей моделей по пути
-  file_info[string] _fileInfoByHash;  // модели, которые запустили в работу
-
-  wstring[]    _filePaths;
-  kompasDll    _dll;
-  int          _cacheId;
-
-  int*         _unicFileCount;
-  int*         _cacheHit;
+  FileStorage       _storage;
+  wstring[]         _filePaths;
+  string[wstring]   _fileHashByLongPath;  // список хешей файлов по длинному пути
+  file_info[string] _fileInfoByHash;      // обработанный файлы по хешу
+  string[wstring]   _fileHashByShortPath; // список хешуй файлов по короткому пути
 
 public:
 
-  this(wstring[] filePaths, kompasDll dll, int cacheId, int* unicFileCount, int* cacheHit)
+  this(FileStorage storage, wstring[] filePaths)
   {
     super(&run);
-    _filePaths     = filePaths;
-    _dll           = dll;
-    _cacheId       = cacheId;
-    _unicFileCount = unicFileCount;
-    _cacheHit      = cacheHit;
+    _storage   = storage;
+    _filePaths = filePaths;
   }
 
-  file_info GetResult(wstring filePath)
+  file_info GetResult(wstring longPath)
   {
-    string digest = _modelHashByPath[filePath.toLower];
-    return _fileInfoByHash[digest];
+    string fileDigest = _fileHashByLongPath[longPath.toLower];
+    return _fileInfoByHash[fileDigest];
   }
 
 private:
+  string getHash(wstring shortPath)
+  {
+    if (string* hash = shortPath in _fileHashByShortPath)
+      return *hash;
+    string hash = getMD5(shortPath);
+    _fileHashByShortPath[shortPath] = hash;
+    return hash;
+  }
+
+  void cache_file_2_file_info(CACHE_FILE_INFO* cInfo, file_info fInfo)
+  {
+    fInfo.dataDigest = to!string(cInfo.dataDigest);
+    fInfo.param      = to!string(cInfo.param);
+    fInfo.data       = cInfo.data;
+    fInfo.dataLen    = cInfo.dataLen;
+    fInfo.icon       = cInfo.icon;
+    fInfo.iconLen    = cInfo.iconLen;
+  }
+
   void run()
   {
-    _dll.kompas_cache_clear_temp(_cacheId);
+    _storage._cacheDll.cache_server_clear(_storage._cacheId);
+    foreach (kompasId; _storage._kompasId)
+      _storage._kompasDll.kompas_server_clear(kompasId);
     
     // разберем сколько моделей надо обработать
-    foreach (filePath; _filePaths)
-      if (filePath.length != 0)
+    foreach (longPath; _filePaths)
+      if (longPath.length != 0)
       {
-        filePath = filePath.toLower;
-        if (!(filePath in _modelHashByPath)) // если такой путь не обрабатывали, то отметим его обработанным
+        longPath = longPath.toLower;
+        if (!(longPath in _fileHashByLongPath)) // если такой путь не обрабатывали, то отметим его обработанным
         {
-          wstring realPath  = filePath;
+          wstring shortPath = longPath;
           wstring digestSuf = "";
           
-          int stickPos = filePath.indexOf("|");
+          int stickPos = longPath.indexOf("|");
           if (stickPos != -1)
           {
-            realPath  = filePath[0 .. stickPos];
-            digestSuf = filePath[stickPos .. $];
+            shortPath = longPath[0 .. stickPos];
+            digestSuf = longPath[stickPos .. $];
           }
 
-          string digest = getMD5(realPath) ~ to!string(toAnsii(digestSuf, 1251));
-          _modelHashByPath[filePath] = digest;
+          string fileDigest = getHash(shortPath) ~ to!string(toAnsii(digestSuf, 1251));
+          _fileHashByLongPath[longPath] = fileDigest;
 
           // добавим его в список на обработку если такого хэша еще там не было
-          if (!(digest in _fileInfoByHash))
-            _fileInfoByHash[digest] = new file_info(filePath, digest);
+          if (!(fileDigest in _fileInfoByHash))
+            _fileInfoByHash[fileDigest] = new file_info(longPath, fileDigest);
         }
       }
 
-    // получим данные для файлов
+    // сперва считываем из кэша
     foreach (fileInfo; _fileInfoByHash.byValue)
     {
-      bool isFromCache = false;
-      bool res = _dll.kompas_cache_file_info(_cacheId, fileInfo.digest.toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen, &isFromCache);
+      CACHE_FILE_INFO cInfo;
+      bool res = _storage._cacheDll.cache_server_read(_storage._cacheId, fileInfo.fileDigest.toStringz, &cInfo);
+      if (res)
+      {
+        cache_file_2_file_info(&cInfo, fileInfo);
+        fileInfo.fromCache = true;
+      }
+    }
+
+    // получим данные для файлов
+    auto fileJob = array(_fileInfoByHash.byValue).filter!(a => !a.fromCache);
+    foreach (fileInfo; fileJob)
+    {
+      CACHE_FILE_INFO cInfo;
+      bool res = _storage._kompasDll.kompas_server_file(_storage._kompasId[0], toAnsii(fileInfo.longPath, 1251).toStringz, false, &cInfo);
       if (!res)
       {
-        string err = to!string(_dll.kompas_cache_error());
-        auto err2 = toUtf(to!(char[])(err), 1251);
-        throw new Exception("FileStorage: " ~ to!string(err2));
+//        string err = to!string(_dll.kompas_cache_error());
+//        auto err2 = toUtf(to!(char[])(err), 1251);
+//        throw new Exception("FileStorage: " ~ to!string(err2));
       }
-
-      *_unicFileCount += 1;
-      if (isFromCache)
-        *_cacheHit += 1;
     }
   }
 }

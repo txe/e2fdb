@@ -385,7 +385,7 @@ BEGIN_FUN
 END_FUN
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API int kompas_server_file(int kompasServer, const char* fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo)
+E2FDBHELPER_API bool kompas_server_file(int kompasServer, const char* fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo)
 {
 BEGIN_FUN
   return KompasServer::_File(kompasServer, fileName, isEngSys, fileInfo);
@@ -399,14 +399,14 @@ BEGIN_FUN
 END_FUN
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API int kompas_server_clear(int kompasServer)
+E2FDBHELPER_API bool kompas_server_clear(int kompasServer)
 {
 BEGIN_FUN
   return KompasServer::_Clear(kompasServer);
 END_FUN
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API int kompas_server_quit(int kompasServer)
+E2FDBHELPER_API bool kompas_server_quit(int kompasServer)
 {
 BEGIN_FUN
   return KompasServer::_Quit(kompasServer);

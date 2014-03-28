@@ -74,8 +74,8 @@ E2FDBHELPER_API bool        cache_server_quit(int cacheServer);
 /*                         kompas server                                */
 /************************************************************************/
 E2FDBHELPER_API int         kompas_server_init(int index, int majorVer, int minorVer);
-E2FDBHELPER_API int         kompas_server_file(int kompasServer, const char* fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo);
+E2FDBHELPER_API bool         kompas_server_file(int kompasServer, const char* fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo);
 E2FDBHELPER_API const char* kompas_server_message(int kompasServer);
-E2FDBHELPER_API int         kompas_server_clear(int kompasServer);
-E2FDBHELPER_API int         kompas_server_quit(int kompasServer);
+E2FDBHELPER_API bool         kompas_server_clear(int kompasServer);
+E2FDBHELPER_API bool         kompas_server_quit(int kompasServer);
 

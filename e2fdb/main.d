@@ -6,7 +6,6 @@ import std.string;
 import std.parallelism;
 import edb.parser;
 import edb.structure;
-import helper.fb;
 import fdb.writeManager;
 import fdb.fdbConvert;
 

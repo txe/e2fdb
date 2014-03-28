@@ -278,9 +278,11 @@ bool FRW_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, 
   API5::ksDocumentParamPtr docParam(cache->kompas5->GetParamStruct(ko_DocumentParam));
   docParam->Init();
   docParam->type = lt_DocFragment;
+  docParam->fileName = tempFrw.c_str();
 
   API5::ksDocument2DPtr doc = cache->kompas5->Document2D();
   doc->ksCreateDocument(docParam);
+  doc->ksSetObjParam(doc->reference, 0, 1);
 
   // вставка фрагмента в документ
   API5::ksFragmentPtr frag = doc->GetFragment();
@@ -295,6 +297,7 @@ bool FRW_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, 
     glb_error = "frag->ksInsertFragment == 0 для " + fromFile;
     return false;
   }
+  
 
   // перенесем РАЗМЕРЫ на отдельный слой
   if (FRW_MoveDimension(cache->kompas5, doc))
@@ -376,7 +379,7 @@ bool FRW_CreatePng(std::wstring pngName, API5::KompasObjectPtr kompas5, API5::ks
   double xSize = 1., ySize = 1.;
   double xBot = 1., yBot = 1.;
 
-  FRW_PreparePng(kompas5, doc, xSize, ySize, xBot, yBot, textCount);
+  //FRW_PreparePng(kompas5, doc, xSize, ySize, xBot, yBot, textCount);
 
   double maxSize = xSize > ySize ? xSize : ySize;
   double koef    = 128./maxSize; // все картинки по умолчанию 128х128, потом сжимаются для четкой картинки
@@ -385,32 +388,34 @@ bool FRW_CreatePng(std::wstring pngName, API5::KompasObjectPtr kompas5, API5::ks
 
   //FRW_ModifyHatch(maxSize / 50.);
 
-  doc->ksLayer(0);
+  //doc->ksLayer(0);
 
-  // определяем невидимый стиль линий
-  API5::ksLibStylePtr style = kompas5->GetParamStruct(ko_LibStyle);
-  style->styleNumber    = 100;
-  style->typeAllocation = 1;
-  style->fileName       = kompas5->ksGetFullPathFromSystemPath(L"spds.lcs", 0 /*sptSYSTEM_FILES*/);
+//   // определяем невидимый стиль линий
+//   API5::ksLibStylePtr style = kompas5->GetParamStruct(ko_LibStyle);
+//   style->styleNumber    = 100;
+//   style->typeAllocation = 1;
+//   style->fileName       = kompas5->ksGetFullPathFromSystemPath(L"spds.lcs", 0 /*sptSYSTEM_FILES*/);
+// 
+//   // создаём невидимый прямоугольник, чтобы избежать компасового глюка 
+//   // с потерей части изображения при сохранении в PNG
+//   API5::ksRectangleParamPtr rect = kompas5->GetParamStruct(ko_RectangleParam);
+//   rect->Init();
+//   rect->x      = xBot - maxSize/20.;
+//   rect->y      = yBot - maxSize/20.;
+//   rect->width  = xSize + maxSize/10.;
+//   rect->height = ySize + maxSize/10.;
+//   rect->style  = doc->ksAddStyle(1 /*CURVE_STYLE*/, style, 1);
 
-  // создаём невидимый прямоугольник, чтобы избежать компасового глюка 
-  // с потерей части изображения при сохранении в PNG
-  API5::ksRectangleParamPtr rect = kompas5->GetParamStruct(ko_RectangleParam);
-  rect->Init();
-  rect->x      = xBot - maxSize/20.;
-  rect->y      = yBot - maxSize/20.;
-  rect->width  = xSize + maxSize/10.;
-  rect->height = ySize + maxSize/10.;
-  rect->style  = doc->ksAddStyle(1 /*CURVE_STYLE*/, style, 1);
-
-  doc->ksRectangle(rect, 0);
+//  doc->ksRectangle(rect, 0);
 
   API5::ksRasterFormatParamPtr raster = doc->RasterFormatParam();
-  raster->format       = 3;   /*FORMAT_PNG*/
-  raster->colorBPP     = 32;  /*BPP_COLOR_32*/
-  raster->extScale     = 0.236 * koef; // max(0.2633 * Koef,0.01); - защита // Масштаб сохранения 0.236 - коэффициент преобразования из мм в пиксели
+  raster->Init();
+  raster->format       = FORMAT_PNG;
+  raster->extResolution = 96;
+  raster->colorBPP     = BPP_COLOR_32;
+  raster->extScale     = 0.01;//0.236 * koef; // max(0.2633 * Koef,0.01); - защита // Масштаб сохранения 0.236 - коэффициент преобразования из мм в пиксели
   raster->onlyThinLine = 0;   // Все линии своей толщины (не всегда работает)
-  raster->colorType    = 3    /*COLOROBJECT*/;   // Цвет линий - по цвету объекта
+  raster->colorType    = COLOROBJECT;   // Цвет линий - по цвету объекта
 
   if (!doc->SaveAsToRasterFormat(pngName.c_str(), raster))
   {
@@ -472,6 +477,10 @@ void FRW_PreparePng(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc, do
     xSize = top->y - bot->y;
     xBot  = bot->x;
     yBot  = bot->y;
+    if (xSize < 0.0001)
+      xSize = 1.;
+    if (ySize < 0.001)
+      ySize = 1.;
   }
 }
 //-------------------------------------------------------------------------

@@ -121,6 +121,8 @@ private:
     // пропишем фрагменты
     foreach (prj; elm._prjs)
       temp._frws ~= new FdbFrw(lfrPath ~ "|" ~ prj._path, prj._name, prj._typeNum);
+    if (temp._frws.length == 0)
+      throw new Exception("DATA_" ~ to!string(virtData._num) ~ ": у объекта отсутствуют проекции");
 
     // пропишем типоразмеры
     foreach (row, simple; elm._simples)

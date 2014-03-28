@@ -46,7 +46,7 @@ int KompasServer::_NewInstance(int index, int majorVer, int minorVer)
 
   std::wstring nextDir;
   std::wstring checkFiles[] = {L"model.m3d", L"mmodel.m3d.png", L"fragment.frw", L"fragment.frw.png"};
-  for (int i = 0;;)
+  for (int i = 0;;++i)
   {
     nextDir = tempDir + std::wstring(aux::itow(index)) + L"_" + std::wstring(aux::itow(i)) + L"_";
     bool exist = false;

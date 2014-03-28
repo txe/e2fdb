@@ -156,11 +156,18 @@ private:
   /++++++++++++++++++++++++++++/
   void RunFileJobs(FdbPacket fdbPacket)
   {
-    int[wstring] models;
+    wstring[] files;
+
     foreach (data; fdbPacket._fdbVirtData)
       foreach (FdbTemplate temp; data._templates)
-        models[temp._model] = 0;
-    _fileStorage.RunTask(models);
+      {
+        //if (temp._model.length != 0)
+        //  files ~= temp._model;
+        foreach (FdbFrw frw; temp._frws)
+          files ~= frw.path;
+      }
+
+    _fileStorage.RunTask(files);
   }
   /++++++++++++++++++++++++++++/
   void WritePacketAndFolderTree(FdbPacket fdbPacket)

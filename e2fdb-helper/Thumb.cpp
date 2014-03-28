@@ -73,3 +73,37 @@ HBITMAP thumb::GetThumbnailHBitmap(std::wstring strFolder, std::wstring strFileN
   }
   return result;
 }
+//-------------------------------------------------------------------------
+bool thumb::Strech(const std::wstring& fileName)
+{
+  CImage oldImage, newImage;
+  oldImage.Load(fileName.c_str());
+  if (!oldImage)
+    return false;
+
+  int Himg = oldImage.GetHeight();
+  int Wimg = oldImage.GetWidth();
+  double coH = (double)Himg/Wimg;
+  double coW = (double)Wimg/Himg;
+  int H = 64*min(coH,1); if(H<=0) H=1;
+  int W = 64*min(coW,1); if(W<=0) W=1;
+
+  // Пересохряняем рисунок в формате 64х64
+  int bpp = oldImage.GetBPP();
+  newImage.Create(64,64,bpp);
+  
+  // Белый фон рисунка - оптимизировать!
+  for(int x=0; x<64; ++x)
+    for(int y=0; y<64; ++y)
+      newImage.SetPixel(x,y,RGB(255,255,255));
+
+  HDC dch = newImage.GetDC();
+  SelectObject(dch,newImage);
+  SetStretchBltMode(dch,HALFTONE);
+  // Основая функция модификации
+  oldImage.StretchBlt(dch,(64-W)/2,(64-H)/2,W,H,0,0,Wimg,Himg,SRCCOPY);
+  newImage.Save(fileName.c_str(), Gdiplus::ImageFormatPNG);
+  newImage.ReleaseDC();
+
+  return true;
+}

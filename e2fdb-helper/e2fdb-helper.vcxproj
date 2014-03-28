@@ -41,12 +41,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)\e2fdb\$(Configuration)\</OutDir>
-    <IncludePath>$(KOMPAS_PATH_32)\SDK\Lib;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <IncludePath>$(KOMPAS_PATH_32)\SDK\Include;$(KOMPAS_PATH_32)\SDK\Lib;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\e2fdb\$(Configuration)\</OutDir>
-    <IncludePath>$(KOMPAS_PATH_32)\SDK\Lib;$(IncludePath)</IncludePath>
+    <IncludePath>$(KOMPAS_PATH_32)\SDK\Include;$(KOMPAS_PATH_32)\SDK\Lib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

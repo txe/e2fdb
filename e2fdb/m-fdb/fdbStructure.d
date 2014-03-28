@@ -70,15 +70,20 @@ class FdbStdSize
     _jpg = jpg;
   }
 }
-/++++++++++++++++++++++++++++/
-class FdbModel
-{
-  
-}
+
 /++++++++++++++++++++++++++++/
 class FdbFrw
 {
+  wstring path;
+  wstring name;
+  int     view;
 
+  this(wstring _path, wstring _name, int _view)
+  {
+    path = _path;
+    name = _name;
+    view = _view;
+  }
 }
 /++++++++++++++++++++++++++++/
 /++++++++++++++++++++++++++++/

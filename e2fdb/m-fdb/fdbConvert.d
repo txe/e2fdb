@@ -109,14 +109,20 @@ private:
       return exists(to!string(fileName));
     }
 
-    // проверим что 3D у все одинаковое
+    // пропишем модель
     temp._model = elm._simples.byValue.front[2]._value;
+    // проверим что 3D у все одинаковое
     //foreach (row, simple; elm._simples)
     //  if (temp._model != simple[2]._value)
     //    throw new EdbStructException("DATA_" ~ to!wstring(virtData._num) ~ ": m3d типоразмера (" ~ simple[2]._value ~") не совпадает с m3d темплейта (" ~ temp._model ~ ")", row);
     if (!buildPath(temp._model, edbFolder ~ "\\M3d\\"))
         throw new Exception("DATA_" ~ to!string(virtData._num) ~ ": не смогли найти m3d: " ~ to!string(temp._model));
 
+    // пропишем фрагменты
+    foreach (prj; elm._prjs)
+      temp._frws ~= new FdbFrw(lfrPath ~ "|" ~ prj._path, prj._name, prj._typeNum);
+
+    // пропишем типоразмеры
     foreach (row, simple; elm._simples)
     {
       // вычислим ID для типоразмера

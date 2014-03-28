@@ -48,8 +48,9 @@ class FileStorage
     _cacheId = _dll.kompas_cache_init((thisDir ~ "/cache.fdb").toStringz, 15, 0);
     if (_cacheId == 0)
     {
-      auto err = to!string(_dll.kompas_cache_error());
-      throw new Exception("FileStorage: " ~ err);
+      string err = to!string(_dll.kompas_cache_error());
+      auto err2 = toUtf(to!(char[])(err), 1251);
+      throw new Exception("FileStorage: " ~ to!string(err2));
     }
 
     write("ok");
@@ -65,16 +66,18 @@ class FileStorage
   }
   /+++++++++++++++++++++++++++/
   // запускает обработку файлов
-  void RunTask(int[wstring] modelPaths)
+  void RunTask(wstring[] filePaths)
   {
-    _thread = new FileThread(modelPaths, _dll, _cacheId, &_unicFileCount, &_cacheHit);
+    _thread = new FileThread(filePaths, _dll, _cacheId, &_unicFileCount, &_cacheHit);
     _thread.run();
+    // TODO start
     //_thread.start();
   }
   /+++++++++++++++++++++++++++/
   void WaitTask()
   {
-   // _thread.join;
+    // TODO join
+    //_thread.join;
   }
   /+++++++++++++++++++++++++++/
   file_info GetModel(wstring modelPath)
@@ -89,7 +92,7 @@ private:
   string[wstring]   _modelHashByPath; // список хешей моделей по пути
   file_info[string] _fileInfoByHash;  // модели, которые запустили в работу
 
-  int[wstring] _modelPaths;
+  wstring[]    _filePaths;
   kompasDll    _dll;
   int          _cacheId;
 
@@ -98,14 +101,14 @@ private:
 
 public:
 
-  this(int[wstring] modelPaths, kompasDll dll, int cacheId, int* unicFileCount, int* cacheHit)
+  this(wstring[] filePaths, kompasDll dll, int cacheId, int* unicFileCount, int* cacheHit)
   {
     super(&run);
-    _modelPaths = modelPaths;
-    _dll = dll;
-    _cacheId = cacheId;
+    _filePaths     = filePaths;
+    _dll           = dll;
+    _cacheId       = cacheId;
     _unicFileCount = unicFileCount;
-    _cacheHit = cacheHit;
+    _cacheHit      = cacheHit;
   }
 
   file_info GetResult(wstring filePath)
@@ -120,18 +123,28 @@ private:
     _dll.kompas_cache_clear_temp(_cacheId);
     
     // разберем сколько моделей надо обработать
-    foreach (modelPath, num; _modelPaths)
-      if (modelPath.length != 0)
+    foreach (filePath; _filePaths)
+      if (filePath.length != 0)
       {
-        modelPath = modelPath.toLower;
-        if (!(modelPath in _modelHashByPath)) // если такой путь не обрабатывали, то отметим его обработанным
+        filePath = filePath.toLower;
+        if (!(filePath in _modelHashByPath)) // если такой путь не обрабатывали, то отметим его обработанным
         {
-          string digest = getMD5(modelPath);
-          _modelHashByPath[modelPath] = digest;
+          wstring realPath  = filePath;
+          wstring digestSuf = "";
+          
+          int stickPos = filePath.indexOf("|");
+          if (stickPos != -1)
+          {
+            realPath  = filePath[0 .. stickPos];
+            digestSuf = filePath[stickPos .. $];
+          }
+
+          string digest = getMD5(realPath) ~ to!string(toAnsii(digestSuf, 1251));
+          _modelHashByPath[filePath] = digest;
 
           // добавим его в список на обработку если такого хэша еще там не было
           if (!(digest in _fileInfoByHash))
-            _fileInfoByHash[digest] = new file_info(modelPath, digest);
+            _fileInfoByHash[digest] = new file_info(filePath, digest);
         }
       }
 
@@ -139,8 +152,14 @@ private:
     foreach (fileInfo; _fileInfoByHash.byValue)
     {
       bool isFromCache = false;
-      _dll.kompas_cache_file_info(_cacheId, fileInfo.digest.toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen, &isFromCache);
-      
+      bool res = _dll.kompas_cache_file_info(_cacheId, fileInfo.digest.toStringz, toAnsii(fileInfo.filePath, 1251).toStringz, false, &fileInfo.data, &fileInfo.dataLen, &fileInfo.crc, &fileInfo.crcLen, &fileInfo.icon, &fileInfo.iconLen, &isFromCache);
+      if (!res)
+      {
+        string err = to!string(_dll.kompas_cache_error());
+        auto err2 = toUtf(to!(char[])(err), 1251);
+        throw new Exception("FileStorage: " ~ to!string(err2));
+      }
+
       *_unicFileCount += 1;
       if (isFromCache)
         *_cacheHit += 1;

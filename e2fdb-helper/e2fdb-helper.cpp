@@ -7,7 +7,8 @@
 #include "ibpp/ibpp.h"
 #include "ByteData.h"
 #include "aux_ext.h"
-#include "CacheApp.h"
+#include "CacheServer.h"
+#include "KompasServer.h"
 
 
 #define BEGIN_FUN try {
@@ -329,30 +330,85 @@ BEGIN_FUN
   return true;
 END_FUN
 }
+
 /************************************************************************/
-/*                         kompas cache                                 */
+/*                         cache server                                 */
 /************************************************************************/
-E2FDBHELPER_API int kompas_cache_init(const char* cacheDb, int majorVer, int minorVer)
+E2FDBHELPER_API int cache_server_init(const char* basePath, int majorVer, int minorVer)
 {
-  return CacheApp::_NewInstance(cacheDb, majorVer, minorVer);
+BEGIN_FUN
+  return CacheServer::_NewInstance(basePath, majorVer, minorVer);
+END_FUN
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API void kompas_cache_stop(int cache)
+E2FDBHELPER_API bool cache_server_write(int cacheServer, const char* digest, CACHE_FILE_INFO* fileInfo)
 {
-  CacheApp::_DeleteInstance(cache);
+BEGIN_FUN
+    return CacheServer::_Write(cacheServer, digest, fileInfo);
+END_FUN
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API void kompas_cache_clear_temp(int cache)
+E2FDBHELPER_API bool cache_server_read(int cacheServer, const char* digest, CACHE_FILE_INFO* fileInfo)
 {
-  CacheApp::_ClearCache(cache);
+BEGIN_FUN
+    return CacheServer::_Read(cacheServer, digest, fileInfo);
+END_FUN
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen, bool* isFromCache)
+E2FDBHELPER_API const char* cache_server_message(int cacheServer)
 {
-  return CacheApp::_CacheFile(cache, digest, fromFile, isEngSys, data, dataLen, crc, crcLen, icon, iconLen, isFromCache);
+BEGIN_FUN
+  return CacheServer::_Message(cacheServer);
+END_FUN
 }
 //-------------------------------------------------------------------------
-E2FDBHELPER_API const char* kompas_cache_error()
+E2FDBHELPER_API bool cache_server_clear(int cacheServer)
 {
-  return CacheApp::_ErrorMessage();
+BEGIN_FUN
+  return CacheServer::_Clear(cacheServer);
+END_FUN
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API bool cache_server_quit(int cacheServer)
+{
+BEGIN_FUN
+  return CacheServer::_Quit(cacheServer);
+END_FUN
+}
+/************************************************************************/
+/*                         kompas server                                */
+/************************************************************************/
+E2FDBHELPER_API int kompas_server_init(int index, int majorVer, int minorVer)
+{
+BEGIN_FUN
+  return KompasServer::_NewInstance(index, majorVer, minorVer);
+END_FUN
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API int kompas_server_file(int kompasServer, const char* fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo)
+{
+BEGIN_FUN
+  return KompasServer::_File(kompasServer, fileName, isEngSys, fileInfo);
+END_FUN
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API const char* kompas_server_message(int kompasServer)
+{
+BEGIN_FUN
+  return KompasServer::_Message(kompasServer);
+END_FUN
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API int kompas_server_clear(int kompasServer)
+{
+BEGIN_FUN
+  return KompasServer::_Clear(kompasServer);
+END_FUN
+}
+//-------------------------------------------------------------------------
+E2FDBHELPER_API int kompas_server_quit(int kompasServer)
+{
+BEGIN_FUN
+  return KompasServer::_Quit(kompasServer);
+END_FUN
 }

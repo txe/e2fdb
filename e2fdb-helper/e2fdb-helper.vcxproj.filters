@@ -44,8 +44,13 @@
     <ClInclude Include="ibpp\ibpp.h">
       <Filter>ibpp</Filter>
     </ClInclude>
-    <ClInclude Include="CacheApp.h" />
     <ClInclude Include="Thumb.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CacheServer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KompasServer.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -119,10 +124,13 @@
     <ClCompile Include="ByteData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CacheApp.cpp">
+    <ClCompile Include="Thumb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Thumb.cpp">
+    <ClCompile Include="CacheServer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="KompasServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

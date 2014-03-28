@@ -1,3 +1,5 @@
+#pragma  once
+
 // The following ifdef block is the standard way of creating macros which make exporting 
 // from a DLL simpler. All files within this DLL are compiled with the E2FDBHELPER_EXPORTS
 // symbol defined on the command line. This symbol should not be defined on any project
@@ -45,10 +47,35 @@ E2FDBHELPER_API bool fdb_statement_get_int(int st, int index, int* value);
 E2FDBHELPER_API bool fdb_statement_get_double(int st, int index, double* value);
 E2FDBHELPER_API bool fdb_statement_get_string(int st, int index, char* value);
 
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+struct CACHE_FILE_INFO
+{
+  const char*  fileDigest;
+  const char*  dataDigest;
+  const char*  param;
 
-E2FDBHELPER_API int  kompas_cache_init(const char* cacheDb, int majorVer, int minorVer);
-E2FDBHELPER_API void kompas_cache_stop(int cache);
-E2FDBHELPER_API void kompas_cache_clear_temp(int cache);
-E2FDBHELPER_API bool kompas_cache_file_info(int cache, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen, bool* isFromCache);
-E2FDBHELPER_API const char* kompas_cache_error();
+  const char*  data;
+  int          dataLen;
+  const char*  icon;
+  int          iconLen;
+};
+/************************************************************************/
+/*                         cache server                                 */
+/************************************************************************/
+E2FDBHELPER_API int         cache_server_init(const char* basePath, int majorVer, int minorVer);
+E2FDBHELPER_API bool        cache_server_write(int cacheServer, const char* digest, CACHE_FILE_INFO* fileInfo);
+E2FDBHELPER_API bool        cache_server_read(int cacheServer, const char* digest, CACHE_FILE_INFO* fileInfo);
+E2FDBHELPER_API const char* cache_server_message(int cacheServer);
+E2FDBHELPER_API bool        cache_server_clear(int cacheServer);
+E2FDBHELPER_API bool        cache_server_quit(int cacheServer);
+/************************************************************************/
+/*                         kompas server                                */
+/************************************************************************/
+E2FDBHELPER_API int         kompas_server_init(int index, int majorVer, int minorVer);
+E2FDBHELPER_API int         kompas_server_file(int kompasServer, const char* fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo);
+E2FDBHELPER_API const char* kompas_server_message(int kompasServer);
+E2FDBHELPER_API int         kompas_server_clear(int kompasServer);
+E2FDBHELPER_API int         kompas_server_quit(int kompasServer);
 

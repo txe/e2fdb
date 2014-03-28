@@ -1,4 +1,9 @@
-#include "CacheApp.h"
+#include "KompasServer.h"
+#include "ByteData.h"
+#include "_io.h"
+#include "aux_ext.h"
+#include "Thumb.h"
+
 #import <ksConstants.tlb>   no_namespace named_guids
 #import <ksConstants3D.tlb> no_namespace named_guids
 #import <kAPI2D5COM.tlb>    no_namespace named_guids
@@ -6,133 +11,54 @@
 #import <kAPI7.tlb>         rename_namespace("API7") named_guids
 #import <kAPI5.tlb>         named_guids rename_namespace("API5")
 #include <ldefin2d.h>
-#include "ibpp/ibpp.h"
-#include "ByteData.h"
-#include "_io.h"
-#include "aux_ext.h"
-#include "Thumb.h"
+
 #include <list>
 
-
 //-------------------------------------------------------------------------
-struct FILE_INFO
+struct kom_file
 {
   ByteData    data;
   ByteData    icon;
-  std::string crc;
+  std::string param;
 };
 //-------------------------------------------------------------------------
-struct CACHE_INFO
+struct kompas_server_info
 {
   API5::KompasObjectPtr kompas5;
-
-  IBPP::Database    db;
-  IBPP::Transaction trans;
-  IBPP::Statement   findSt;
-  IBPP::Statement   addSt;
-  IBPP::Blob        dataBlob;
-  IBPP::Blob        iconBlob;
-
-  std::wstring      tempDir;
-  std::wstring      tempFrw;
- 
-  std::list<FILE_INFO*> infoList;
+  std::wstring          tempDir;
+  std::string           message;
+  std::list<kom_file*>  files;
 };
-//-------------------------------------------------------------------------
-void FillRef(FILE_INFO& fileInfo, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen);
-bool FindFileInCache(CACHE_INFO* cache, const char* digest, FILE_INFO& fileInfo);
-void WriteFileInCache(CACHE_INFO* cache, const std::string& digest, FILE_INFO& fileInfo);
-bool PrepareFile(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo);
-bool FRW_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo);
+
+bool FRW_Prepare(kompas_server_info* info, const std::string& fromFile, bool isEngSys, kom_file& fileInfo);
 bool FRW_MoveDimension(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc);
-bool FRW_CreatePng(std::wstring pngName, API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc);
+bool FRW_CreatePng(kompas_server_info* info, const std::wstring& pngName, API5::ksDocument2DPtr doc);
 void FRW_PreparePng(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc, double& xSize, double& ySize, double& xBot, double& yBot, int& textCount);
-bool M3D_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo);
+bool M3D_Prepare(kompas_server_info* info, const std::string& fromFile, bool isEngSys, kom_file& fileInfo);
 
 
-static std::string glb_error;
 //-------------------------------------------------------------------------
-const char* CacheApp::_ErrorMessage()
-{
-  return glb_error.c_str();
-}
-//-------------------------------------------------------------------------
-int CacheApp::_NewInstance(const char* cacheDb, int majorVer, int minorVer)
+int KompasServer::_NewInstance(int index, int majorVer, int minorVer)
 {
   std::wstring tempDir = io::dir::temp_dir(L"_fdb_converter");
   if (!io::dir::exist(tempDir))
     io::dir::create(tempDir);
 
-  auto remove = [](std::wstring file) -> bool
+  std::wstring nextDir;
+  std::wstring checkFiles[] = {L"model.m3d", L"mmodel.m3d.png", L"fragment.frw", L"fragment.frw.png"};
+  for (int i = 0;;)
   {
-    if (io::file::exist(file))
-      return io::file::remove(file);
-    return true;
-  };
-  if (!remove(tempDir + L"fragment.frw"))
-  {
-    glb_error = "не могу удалить временный файл фрагмента";
-    return false;
-  }
-  if (!remove(tempDir + L"fragment.frw.png"))
-  {
-    glb_error = "не могу удалить временный файл иконки фрагмента";
-    return false;
-  }
-  if (!remove(tempDir + L"model.m3d"))
-  {
-    glb_error = "не могу удалить временный файл модели";
-    return false;
-  }
-  if (!remove(tempDir + L"model.m3d.png"))
-  {
-    glb_error = "не могу удалить временный файл иконки модели";
-    return false;
+    nextDir = tempDir + std::wstring(aux::itow(index)) + L"_" + std::wstring(aux::itow(i)) + L"_";
+    bool exist = false;
+    for (int k = 0; k < 4; ++k)
+      if (exist = io::file::exist(nextDir + checkFiles[k]))
+        break;
+    if (!exist)
+      break;
   }
 
-  // проверим подсоединение базы
-  IBPP::Database base = IBPP::DatabaseFactory("", cacheDb, "sysdba", "masterkey");
-  base->Connect();
-  if (!base->Connected())
-  {
-    glb_error = "не смогли подключится к файловому кэшу";
-    return 0;
-  }
-
-  IBPP::Transaction trans = IBPP::TransactionFactory(base, IBPP::amWrite, IBPP::ilReadCommitted, IBPP::lrNoWait);
-  trans->Start();
-
-  // если версия прописана, то проверим совпадение
-  IBPP::Statement st = StatementFactory(base, trans);
-  st->Execute("SELECT param_value FROM params WHERE param_key='version'");
-  std::string version = std::string((LPCSTR)aux::itoa(majorVer)) + "." + std::string((LPCSTR)aux::itoa(minorVer));
-  if (st->Fetch())
-  {
-    std::string res;
-    st->Get(1, res);
-    if (res != version)
-    {
-      glb_error = "версия файлового кэша не совпадает с версией компаса";
-      return 0;
-    }
-  }
-  else // если там версии нет, то это пустышка, пропишем текущую версию
-  {
-    st->Prepare("INSERT INTO params (param_key, param_value) VALUES(?, ?)");
-    st->Set(1, "version");
-    st->Set(2, version);
-    st->Execute();
-  }
-
-
-  IBPP::Blob dataBlob = IBPP::BlobFactory(base, trans);
-  IBPP::Blob iconBlob = IBPP::BlobFactory(base, trans);
-  // подготовим нужные запросы к базе
-  IBPP::Statement findSt = StatementFactory(base, trans);
-  findSt->Prepare("SELECT data, icon, crc FROM files WHERE digest = ?");
-  IBPP::Statement addSt = StatementFactory(base, trans);
-  addSt->Prepare("INSERT INTO files (digest, data, icon, crc) VALUES(?, ?, ?, ?)");
-  
+  kompas_server_info* info = new kompas_server_info;
+  info->kompas5 = NULL;
 
   // запустим компас
   CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -144,143 +70,89 @@ int CacheApp::_NewInstance(const char* cacheDb, int majorVer, int minorVer)
   HRESULT hRes = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, IID_IUnknown, (void**)&kompasApp);
   if (!SUCCEEDED(hRes))
   {
-    glb_error = "не смогли запустить компас";
+    info->message = "не смогли запустить компас";
     return 0;
   }
 
+  info->kompas5 = kompasApp;
+  info->tempDir = nextDir;
 
-  CACHE_INFO* cache = new CACHE_INFO; 
-  cache->kompas5 = kompasApp;
-  cache->db        = base;
-  cache->trans     = trans;
-  cache->findSt    = findSt;
-  cache->addSt     = addSt;
-  cache->dataBlob  = dataBlob;
-  cache->iconBlob  = iconBlob;
-  cache->tempDir   = tempDir;
-
-  return (int)cache;
+  return (int)info;
 }
 //-------------------------------------------------------------------------
-bool CacheApp::_DeleteInstance(int c)
+int KompasServer::_File(int kompasServer, std::string fileName, bool isEngSys, CACHE_FILE_INFO* fileInfo)
 {
-  CACHE_INFO* cache = (CACHE_INFO*)c;
-  if (cache)
-  {
-    if (cache->kompas5)
-      cache->kompas5->Quit();
+  kompas_server_info* info = (kompas_server_info*)kompasServer;
+  kom_file* file = new kom_file;
 
-    if (cache->db->Connected())
-    {
-      cache->trans->Commit();
-      cache->db->Disconnect();
-    }
-  }
+  bool isFrw = fileName.find("|", 0) != std::string::npos;
+  bool isOk = false;
+  if (isFrw)
+    isOk = FRW_Prepare(info, fileName, isEngSys, *file);
+  else
+    isOk = M3D_Prepare(info, fileName, isEngSys, *file);
+  if (!isOk)
+    return false;
 
-  delete cache;
+  fileInfo->data    = file->data.GetData();
+  fileInfo->dataLen = file->data.GetLength();
+  fileInfo->icon    = file->icon.GetData();
+  fileInfo->iconLen = file->icon.GetLength();
+  fileInfo->param   = file->param.c_str();
+  info->files.push_back(file);
+
   return true;
 }
 //-------------------------------------------------------------------------
-void CacheApp::_ClearCache(int c)
+const char*KompasServer::_Message(int kompasServer)
 {
-  CACHE_INFO* cache = (CACHE_INFO*)c;
-  for (auto it = cache->infoList.begin(); it != cache->infoList.end(); ++it)
-    delete *it;
-  cache->infoList.clear();
+  if (kompas_server_info* info = (kompas_server_info*)kompasServer)
+    return info->message.c_str();
+  return "kompasServer нулевой указатель";
 }
 //-------------------------------------------------------------------------
-bool CacheApp::_CacheFile(int c, const char* digest, const char* fromFile, bool isEngSys, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen, bool* isFromCache)
+int KompasServer::_Clear(int kompasServer)
 {
-  CACHE_INFO* cache = (CACHE_INFO*)c;
-  *isFromCache = false;
-
-  FILE_INFO* fileInfo = new FILE_INFO();
-  if (FindFileInCache(cache, digest, *fileInfo))
+  if (kompas_server_info* info = (kompas_server_info*)kompasServer)
   {
-    cache->infoList.push_back(fileInfo);
-    FillRef(*fileInfo, data, dataLen, crc, crcLen, icon, iconLen);
-    *isFromCache = true;
+    for (auto it = info->files.begin(); it != info->files.end(); ++it)
+      delete *it;
+    info->files.clear();
     return true;
   }
-
-  if (PrepareFile(cache, fromFile, isEngSys, *fileInfo))
-  {
-    cache->infoList.push_back(fileInfo);
-    WriteFileInCache(cache, digest, *fileInfo);
-    FillRef(*fileInfo, data, dataLen, crc, crcLen, icon, iconLen);
-    return true;
-  }
-
-  delete fileInfo;
   return false;
 }
 //-------------------------------------------------------------------------
-void FillRef(FILE_INFO& fileInfo, char** data, int* dataLen, char** crc, int* crcLen, char** icon, int* iconLen)
+int KompasServer::_Quit(int kompasServer)
 {
-  *data    = (char*)fileInfo.data.GetData();
-  *dataLen = fileInfo.data.GetLength();
-  *icon    = (char*)fileInfo.icon.GetData();
-  *iconLen = fileInfo.icon.GetLength();
-  *crc     = (char*)fileInfo.crc.c_str();
-  *crcLen  = fileInfo.crc.size();
-}
-//-------------------------------------------------------------------------
-bool FindFileInCache(CACHE_INFO* cache, const char* digest, FILE_INFO& fileInfo)
-{
-  cache->findSt->Set(1, digest);
-  cache->findSt->Execute();
-  if (!cache->findSt->Fetch())
-    return false;
-
-  cache->findSt->Get(1, cache->dataBlob);
-  fileInfo.data.LoadFromBlob(cache->dataBlob);
-  cache->findSt->Get(2, cache->iconBlob);
-  fileInfo.icon.LoadFromBlob(cache->iconBlob);
-  cache->findSt->Get(3, fileInfo.crc);
-
+  if (kompas_server_info* info = (kompas_server_info*)kompasServer)
+  {
+    if (info->kompas5)
+      info->kompas5->Quit();
+    delete info;
+  }
   return true;
 }
 //-------------------------------------------------------------------------
-void WriteFileInCache(CACHE_INFO* cache, const std::string& digest, FILE_INFO& fileInfo)
+bool FRW_Prepare(kompas_server_info* info, const std::string& fromFile, bool isEngSys, kom_file& fileInfo)
 {
-  cache->addSt->Set(1, digest);
-  fileInfo.data.SaveToBlob(cache->dataBlob);
-  cache->addSt->Set(2, cache->dataBlob);
-  fileInfo.icon.SaveToBlob(cache->iconBlob);
-  cache->addSt->Set(3, cache->iconBlob);
-  cache->addSt->Set(4, fileInfo.crc);
-
-  cache->addSt->Execute();
-}
-//-------------------------------------------------------------------------
-bool PrepareFile(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo)
-{
-  bool isFrw = fromFile.find("|", 0) != std::string::npos;
-  if (isFrw)
-    return FRW_Prepare(cache, fromFile, isEngSys, fileInfo);
-  else
-    return M3D_Prepare(cache, fromFile, isEngSys, fileInfo);
-}
-//-------------------------------------------------------------------------
-bool FRW_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo)
-{
-  std::wstring tempFrw = cache->tempDir + L"fragment.frw";
+  std::wstring tempFrw = info->tempDir + L"fragment.frw";
   if (io::file::exist(tempFrw))
     if (!io::file::remove(tempFrw))
     {
-      glb_error = "не могу удалить временный файл фрагмента";
+      info->message = "не могу удалить временный файл фрагмента";
       return false;
     }
 
-  API5::ksPlacementParamPtr place = cache->kompas5->GetParamStruct(ko_PlacementParam);
+  API5::ksPlacementParamPtr place = info->kompas5->GetParamStruct(ko_PlacementParam);
   place->Init();
 
-  API5::ksDocumentParamPtr docParam(cache->kompas5->GetParamStruct(ko_DocumentParam));
+  API5::ksDocumentParamPtr docParam(info->kompas5->GetParamStruct(ko_DocumentParam));
   docParam->Init();
   docParam->type = lt_DocFragment;
   docParam->fileName = tempFrw.c_str();
 
-  API5::ksDocument2DPtr doc = cache->kompas5->Document2D();
+  API5::ksDocument2DPtr doc = info->kompas5->Document2D();
   doc->ksCreateDocument(docParam);
   doc->ksSetObjParam(doc->reference, 0, 1);
 
@@ -289,19 +161,18 @@ bool FRW_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, 
   long def = frag->ksFragmentDefinition(aux::_a2w(fromFile).c_str(), L"name", 0);
   if (def == 0)
   {
-    glb_error = "frag->ksFragmentDefinition == 0 для " + fromFile;
+    info->message = "frag->ksFragmentDefinition == 0 для " + fromFile;
     return false;
   }
   if (!frag->ksInsertFragment(def, FALSE, place))
   {
-    glb_error = "frag->ksInsertFragment == 0 для " + fromFile;
+    info->message = "frag->ksInsertFragment == 0 для " + fromFile;
     return false;
   }
-  
 
   // перенесем РАЗМЕРЫ на отдельный слой
-  if (FRW_MoveDimension(cache->kompas5, doc))
-    fileInfo.crc = "dim=1";
+  if (FRW_MoveDimension(info->kompas5, doc))
+    fileInfo.param = "dim=1";
 
   // создадим файл
   doc->ksSaveDocument(tempFrw.c_str());
@@ -312,10 +183,10 @@ bool FRW_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, 
   // создать иконку
   std::wstring pngName = tempFrw + L".png";
   io::file::remove(pngName);
-  if (!FRW_CreatePng(pngName, cache->kompas5, doc))
+  if (!FRW_CreatePng(info, pngName, doc))
   {
     doc->ksCloseDocument();
-    glb_error = glb_error + ": " + fromFile;
+    info->message = info->message + ": " + fromFile;
     return false;
   }
   fileInfo.icon.LoadFromFile(pngName);
@@ -370,7 +241,7 @@ bool FRW_MoveDimension(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc)
   return isDim;
 }
 //-------------------------------------------------------------------------
-bool FRW_CreatePng(std::wstring pngName, API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc)
+bool FRW_CreatePng(kompas_server_info* info, const std::wstring& pngName, API5::ksDocument2DPtr doc)
 {
   //FRW_RemovePoints();
   //FRW_ChangeText();
@@ -419,13 +290,13 @@ bool FRW_CreatePng(std::wstring pngName, API5::KompasObjectPtr kompas5, API5::ks
 
   if (!doc->SaveAsToRasterFormat(pngName.c_str(), raster))
   {
-    glb_error = "не смогли сохранить в растер, " + aux::_w2a((LPCWSTR)kompas5->ksStrResult());
+    info->message = "не смогли сохранить в растер, " + aux::_w2a((LPCWSTR)info->kompas5->ksStrResult());
     return false;
   }
 
   if (!thumb::Strech(pngName))
   {
-    glb_error = "не смогли преобразовать растр";
+    info->message = "не смогли преобразовать растр";
     return false;
   }
 
@@ -484,18 +355,18 @@ void FRW_PreparePng(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc, do
   }
 }
 //-------------------------------------------------------------------------
-bool M3D_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, FILE_INFO& fileInfo)
+bool M3D_Prepare(kompas_server_info* info, const std::string& fromFile, bool isEngSys, kom_file& fileInfo)
 {
-  std::wstring tempM3d = cache->tempDir + L"model.m3d";
+  std::wstring tempM3d = info->tempDir + L"model.m3d";
 
   io::file::remove(tempM3d);
   io::file::copy(aux::_a2w(fromFile), tempM3d);
 
-  API5::ksDocument3DPtr doc = cache->kompas5->Document3D();
+  API5::ksDocument3DPtr doc = info->kompas5->Document3D();
   if (0 == doc->Open(tempM3d.c_str(), VARIANT_TRUE))
   {
     doc->close();
-    glb_error = "не смогли открыть модель: " + fromFile;
+    info->message = "не смогли открыть модель: " + fromFile;
     return false;
   }
 
@@ -519,12 +390,12 @@ bool M3D_Prepare(CACHE_INFO* cache, const std::string& fromFile, bool isEngSys, 
   // создадим icon
   int pngSize = isEngSys ? 128 : 64;
 
-  std::wstring pngFile = cache->tempDir + L"model.png";
+  std::wstring pngFile = info->tempDir + L"model.png";
   io::file::remove(pngFile);
 
-  if (!thumb::ExtractThumbnail(cache->tempDir, L"model.m3d", L"model.png", pngSize))
+  if (!thumb::ExtractThumbnail(info->tempDir, L"model.m3d", L"model.png", pngSize))
   {
-    glb_error = "не смогли создать иконку с модели: " + fromFile;
+    info->message = "не смогли создать иконку с модели: " + fromFile;
     return false;
   }
 

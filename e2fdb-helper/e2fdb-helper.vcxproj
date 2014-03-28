@@ -87,16 +87,17 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CacheApp.h" />
+    <ClInclude Include="CacheServer.h" />
     <ClInclude Include="ibpp\ibase.h" />
     <ClInclude Include="ibpp\iberror.h" />
     <ClInclude Include="ibpp\ibpp.h" />
     <ClInclude Include="ibpp\_ibpp.h" />
+    <ClInclude Include="KompasServer.h" />
     <ClInclude Include="Thumb.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ByteData.cpp" />
-    <ClCompile Include="CacheApp.cpp" />
+    <ClCompile Include="CacheServer.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -125,6 +126,7 @@
     <ClCompile Include="ibpp\_rb.cpp" />
     <ClCompile Include="ibpp\_spb.cpp" />
     <ClCompile Include="ibpp\_tpb.cpp" />
+    <ClCompile Include="KompasServer.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

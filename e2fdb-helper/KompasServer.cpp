@@ -24,16 +24,17 @@ struct kom_file
 //-------------------------------------------------------------------------
 struct kompas_server_info
 {
-  API5::KompasObjectPtr kompas5;
-  std::wstring          tempDir;
-  std::string           message;
-  std::list<kom_file*>  files;
+  API5::KompasObjectPtr      kompas5;
+  API7::IKompasDocument2DPtr doc7;
+  std::wstring               tempDir;
+  std::string                message;
+  std::list<kom_file*>       files;
 };
 
 bool FRW_Prepare(kompas_server_info* info, const std::string& fromFile, bool isEngSys, kom_file& fileInfo);
-bool FRW_MoveDimension(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc);
-bool FRW_CreatePng(kompas_server_info* info, const std::wstring& pngName, API5::ksDocument2DPtr doc);
-void FRW_PreparePng(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc, double& xSize, double& ySize, double& xBot, double& yBot, int& textCount);
+bool FRW_MoveDimension(const API5::KompasObjectPtr& kompas5, const API5::ksDocument2DPtr& doc);
+bool FRW_CreatePng(kompas_server_info* info, const std::wstring& pngName, const API5::ksDocument2DPtr& doc);
+void FRW_PreparePng(const API5::KompasObjectPtr& kompas5, const API5::ksDocument2DPtr& doc, double& xSize, double& ySize, double& xBot, double& yBot, int& textCount);
 bool M3D_Prepare(kompas_server_info* info, const std::string& fromFile, bool isEngSys, kom_file& fileInfo);
 
 
@@ -41,8 +42,8 @@ bool M3D_Prepare(kompas_server_info* info, const std::string& fromFile, bool isE
 int KompasServer::_NewInstance(int index, int majorVer, int minorVer)
 {
   std::wstring tempDir = io::dir::temp_dir(L"_fdb_converter");
-  if (!io::dir::exist(tempDir))
-    io::dir::create(tempDir);
+  io::dir::remove(tempDir);
+  io::dir::create(tempDir);
 
   std::wstring nextDir;
   std::wstring checkFiles[] = {L"model.m3d", L"mmodel.m3d.png", L"fragment.frw", L"fragment.frw.png"};
@@ -61,7 +62,7 @@ int KompasServer::_NewInstance(int index, int majorVer, int minorVer)
   info->kompas5 = NULL;
 
   // запустим компас
-  CoInitializeEx(NULL, COINIT_MULTITHREADED);
+  CoInitializeEx(NULL, COINIT_MULTITHREADED | COINIT_SPEED_OVER_MEMORY);
 
   CLSID clsid = IID_NULL;
   CLSIDFromProgID(L"KOMPAS.Application.5", &clsid);
@@ -76,6 +77,21 @@ int KompasServer::_NewInstance(int index, int majorVer, int minorVer)
 
   info->kompas5 = kompasApp;
   info->tempDir = nextDir;
+
+  // создать скрытый документ
+  API5::ksPlacementParamPtr place = info->kompas5->GetParamStruct(ko_PlacementParam);
+  place->Init();
+  API5::ksDocumentParamPtr docParam(info->kompas5->GetParamStruct(ko_DocumentParam));
+  docParam->Init();
+  docParam->type = lt_DocFragment;
+  docParam->fileName = L"";
+  API5::ksDocument2DPtr blindDoc = info->kompas5->Document2D();
+  blindDoc->ksCreateDocument(docParam);
+  blindDoc->ksSetObjParam(blindDoc->reference, 0, 1);
+
+  
+  info->doc7 = info->kompas5->TransferReference(blindDoc->reference, 0);
+  
 
   return (int)info;
 }
@@ -94,11 +110,13 @@ bool KompasServer::_File(int kompasServer, std::string fileName, bool isEngSys, 
   if (!isOk)
     return false;
 
+  fileInfo->dataDigest = "";
   fileInfo->data    = file->data.GetData();
   fileInfo->dataLen = file->data.GetLength();
   fileInfo->icon    = file->icon.GetData();
   fileInfo->iconLen = file->icon.GetLength();
   fileInfo->param   = file->param.c_str();
+
   info->files.push_back(file);
 
   return true;
@@ -144,38 +162,19 @@ bool FRW_Prepare(kompas_server_info* info, const std::string& fromFile, bool isE
       return false;
     }
 
-  API5::ksPlacementParamPtr place = info->kompas5->GetParamStruct(ko_PlacementParam);
-  place->Init();
+  API7::IInsertionsManagerPtr   mng  = info->doc7;
+  API7::IInsertionDefinitionPtr defn = mng->AddDefinition(ksTReferenceFragment, L"name", aux::_a2w(fromFile).c_str());
+  API7::IKompasDocument2DPtr    frwDoc = defn->Open(FALSE, FALSE);
+  frwDoc->Active = TRUE;
 
-  API5::ksDocumentParamPtr docParam(info->kompas5->GetParamStruct(ko_DocumentParam));
-  docParam->Init();
-  docParam->type = lt_DocFragment;
-  docParam->fileName = tempFrw.c_str();
-
-  API5::ksDocument2DPtr doc = info->kompas5->Document2D();
-  doc->ksCreateDocument(docParam);
-  doc->ksSetObjParam(doc->reference, 0, 1);
-
-  // вставка фрагмента в документ
-  API5::ksFragmentPtr frag = doc->GetFragment();
-  long def = frag->ksFragmentDefinition(aux::_a2w(fromFile).c_str(), L"name", 0);
-  if (def == 0)
-  {
-    info->message = "frag->ksFragmentDefinition == 0 для " + fromFile;
-    return false;
-  }
-  if (!frag->ksInsertFragment(def, FALSE, place))
-  {
-    info->message = "frag->ksInsertFragment == 0 для " + fromFile;
-    return false;
-  }
+  API5::ksDocument2DPtr doc5 = info->kompas5->TransferInterface(frwDoc, ksAPI5Auto, 0);
 
   // перенесем РАЗМЕРЫ на отдельный слой
-  if (FRW_MoveDimension(info->kompas5, doc))
+  if (FRW_MoveDimension(info->kompas5, doc5))
     fileInfo.param = "dim=1";
 
   // создадим файл
-  doc->ksSaveDocument(tempFrw.c_str());
+  frwDoc->SaveAs(tempFrw.c_str());
 
   fileInfo.data.LoadFromFile(tempFrw);
   fileInfo.data.Compress();
@@ -183,22 +182,26 @@ bool FRW_Prepare(kompas_server_info* info, const std::string& fromFile, bool isE
   // создать иконку
   std::wstring pngName = tempFrw + L".png";
   io::file::remove(pngName);
-  if (!FRW_CreatePng(info, pngName, doc))
-  {
-    doc->ksCloseDocument();
-    info->message = info->message + ": " + fromFile;
-    return false;
-  }
-  fileInfo.icon.LoadFromFile(pngName);
+//   if (!FRW_CreatePng(info, pngName, doc5))
+//   {
+//     frwDoc->Close(kdDoNotSaveChanges);
+//     info->message = info->message + ": " + fromFile;
+//     return false;
+//   }
+//
+//   fileInfo.icon.LoadFromFile(pngName);
+//   fileInfo.icon.Compress();
+
+  fileInfo.icon.LoadFromFile(tempFrw);
   fileInfo.icon.Compress();
 
-  doc->ksCloseDocument();
+  frwDoc->Close(kdDoNotSaveChanges);
 
   return true;
 }
 //-------------------------------------------------------------------------
 // перенесем РАЗМЕРЫ на отдельный слой
-bool FRW_MoveDimension(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc)
+bool FRW_MoveDimension(const API5::KompasObjectPtr& kompas5, const API5::ksDocument2DPtr& doc)
 {
   long layerRef = doc->ksLayer(990);
   if (!layerRef)
@@ -241,7 +244,7 @@ bool FRW_MoveDimension(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc)
   return isDim;
 }
 //-------------------------------------------------------------------------
-bool FRW_CreatePng(kompas_server_info* info, const std::wstring& pngName, API5::ksDocument2DPtr doc)
+bool FRW_CreatePng(kompas_server_info* info, const std::wstring& pngName, const API5::ksDocument2DPtr& doc)
 {
   //FRW_RemovePoints();
   //FRW_ChangeText();
@@ -303,7 +306,7 @@ bool FRW_CreatePng(kompas_server_info* info, const std::wstring& pngName, API5::
   return true;
 }
 //-------------------------------------------------------------------------
-void FRW_PreparePng(API5::KompasObjectPtr kompas5, API5::ksDocument2DPtr doc, double& xSize, double& ySize, double& xBot, double& yBot, int& textCount)
+void FRW_PreparePng(const API5::KompasObjectPtr& kompas5, const API5::ksDocument2DPtr& doc, double& xSize, double& ySize, double& xBot, double& yBot, int& textCount)
 {
   long group = doc->ksNewGroup(1);
   doc->ksEndGroup();

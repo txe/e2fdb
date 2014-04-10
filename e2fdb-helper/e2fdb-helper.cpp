@@ -10,12 +10,17 @@
 #include "CacheServer.h"
 #include "KompasServer.h"
 
+void test()
+{
+  int i = 0;
+}
 
 #define BEGIN_FUN try {
 #define END_FUN } \
   catch (IBPP::Exception& ex) \
   { \
     OutputDebugStringA(ex.what()); \
+    test(); \
     return false; \
   }
 

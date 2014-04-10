@@ -130,7 +130,6 @@ bool CacheServer::_Read(int cacheServer, const char* fileDigest, CACHE_FILE_INFO
   info->stRead->Get(4, file->param);
   info->files.push_back(file);
 
-  fileInfo->fileDigest = file->fileDigest.c_str();
   fileInfo->dataDigest = file->dataDigest.c_str();
   fileInfo->data       = file->data.GetData();
   fileInfo->dataLen    = file->data.GetLength();

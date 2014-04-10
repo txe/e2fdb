@@ -228,8 +228,13 @@ private:
       }
     }
     
-    // получим данные для файлов
+    // файлы, которые не были в кэше
     auto fileJob  = _fileInfoByHash.byValue.array.filter!(a => !a.fromCache).array;
+    
+    _storage._unicFileCount += _fileInfoByHash.length;
+    _storage._cacheHit      += _fileInfoByHash.length - fileJob.length;
+
+    // разобъем файлы на части
     int chunkSize = fileJob.length / _storage._kompasIds.length;
     int rest      = fileJob.length - chunkSize * _storage._kompasIds.length;
     KompasThread[] threads;

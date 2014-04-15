@@ -147,6 +147,10 @@ bool CacheServer::_Clear(int cacheServer)
     for (auto it = info->files.begin(); it != info->files.end(); ++it)
       delete *it;
     info->files.clear();
+
+    info->trans->Commit();
+    info->trans->Start();
+
     return true;
   }
   return false;

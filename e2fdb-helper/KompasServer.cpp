@@ -145,8 +145,15 @@ bool KompasServer::_Quit(int kompasServer)
 {
   if (kompas_server_info* info = (kompas_server_info*)kompasServer)
   {
+    //if (info->doc7)
+    //  info->doc7->Close(kdDoNotSaveChanges);
+    info->doc7 = 0;
+
     if (info->kompas5)
+    {
+      //info->kompas5->LoadDSK();
       info->kompas5->Quit();
+    }
     delete info;
   }
   return true;
